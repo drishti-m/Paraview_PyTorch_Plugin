@@ -7,11 +7,11 @@
       * [algorithms](#algorithms)
       * [internal_algorithms](#internal_algorithms)
     * [util](#util)
-      * [colors]
-      * [keys]
-      * [misc]
-      * [numpy_support]
-      * [vtkAlgorithm]
+      * [colors](#colors)
+      * [keys](#keys)
+      * [misc](#misc)
+      * [numpy_support](#numpy_support)
+      * [vtkAlgorithm](#vtkAlgorithm)
       * [vtkConstants]
       * [vtkImageExportToArray]
       * [vtkImageExportFromArray]
@@ -3693,5 +3693,1363 @@ DATA
 
 FILE
     /home/drishti/paraview/paraview_build/lib/python3.7/site-packages/vtkmodules/numpy_interface/dataset_adapter.py
+
+### util
+
+#### colors
+
+#### keys
+
+#### misc
+
+#### numpy_support
+NAME
+    paraview.vtk.util.numpy_support
+
+DESCRIPTION
+    This module adds support to easily import and export NumPy
+    (http://numpy.scipy.org) arrays into/out of VTK arrays.  The code is
+    loosely based on TVTK (https://svn.enthought.com/enthought/wiki/TVTK).
+    
+    This code depends on an addition to the VTK data arrays made by Berk
+    Geveci to make it support Python's buffer protocol (on Feb. 15, 2008).
+    
+    The main functionality of this module is provided by the two functions:
+        numpy_to_vtk,
+        vtk_to_numpy.
+    
+    
+    Caveats:
+    --------
+    
+     - Bit arrays in general do not have a numpy equivalent and are not
+       supported.  Char arrays are also not easy to handle and might not
+       work as you expect.  Patches welcome.
+    
+     - You need to make sure you hold a reference to a Numpy array you want
+       to import into VTK.  If not you'll get a segfault (in the best case).
+       The same holds in reverse when you convert a VTK array to a numpy
+       array -- don't delete the VTK array.
+    
+    
+    Created by Prabhu Ramachandran in Feb. 2008.
+
+FUNCTIONS
+    create_vtk_array(vtk_arr_type)
+        Internal function used to create a VTK data array from another
+        VTK array given the VTK array type.
+    
+    get_numpy_array_type(vtk_array_type)
+        Returns a numpy array typecode given a VTK array type.
+    
+    get_vtk_array_type(numpy_array_type)
+        Returns a VTK typecode given a numpy array.
+    
+    get_vtk_to_numpy_typemap()
+        Returns the VTK array type to numpy array type mapping.
+    
+    numpy_to_vtk(num_array, deep=0, array_type=None)
+        Converts a real numpy Array to a VTK array object.
+        
+        This function only works for real arrays.
+        Complex arrays are NOT handled.  It also works for multi-component
+        arrays.  However, only 1, and 2 dimensional arrays are supported.
+        This function is very efficient, so large arrays should not be a
+        problem.
+        
+        If the second argument is set to 1, the array is deep-copied from
+        from numpy. This is not as efficient as the default behavior
+        (shallow copy) and uses more memory but detaches the two arrays
+        such that the numpy array can be released.
+        
+        WARNING: You must maintain a reference to the passed numpy array, if
+        the numpy data is gc'd and VTK will point to garbage which will in
+        the best case give you a segfault.
+        
+        Parameters:
+        
+        num_array
+          a 1D or 2D, real numpy array.
+    
+    numpy_to_vtkIdTypeArray(num_array, deep=0)
+    
+    vtk_to_numpy(vtk_array)
+        Converts a VTK data array to a numpy array.
+        
+        Given a subclass of vtkDataArray, this function returns an
+        appropriate numpy array containing the same data -- it actually
+        points to the same data.
+        
+        WARNING: This does not work for bit arrays.
+        
+        Parameters
+        
+        vtk_array
+          The VTK data array to be converted.
+
+DATA
+    VTK_ID_TYPE_SIZE = 8
+    VTK_LONG_TYPE_SIZE = 8
+
+FILE
+    /home/drishti/paraview/paraview_build/lib/python3.7/site-packages/vtkmodules/util/numpy_support.py
+
+
+
+
+#### vtkAlgorithm
+
+NAME
+    paraview.vtk.util.vtkAlgorithm
+
+CLASSES
+    builtins.object
+        VTKAlgorithm
+    vtkmodules.vtkFiltersPython.vtkPythonAlgorithm(vtkmodules.vtkCommonExecutionModel.vtkAlgorithm)
+        VTKPythonAlgorithmBase
+    
+    class VTKAlgorithm(builtins.object)
+     |  VTKAlgorithm(nInputPorts=1, inputType='vtkDataSet', nOutputPorts=1, outputType='vtkPolyData')
+     |  
+     |  This is a superclass which can be derived to implement
+     |  Python classes that work with vtkPythonAlgorithm. It implements
+     |  Initialize(), ProcessRequest(), FillInputPortInformation() and
+     |  FillOutputPortInformation().
+     |  
+     |  Initialize() sets the input and output ports based on data
+     |  members.
+     |  
+     |  ProcessRequest() calls RequestXXX() methods to implement
+     |  various pipeline passes.
+     |  
+     |  FillInputPortInformation() and FillOutputPortInformation() set
+     |  the input and output types based on data members.
+     |  
+     |  Methods defined here:
+     |  
+     |  FillInputPortInformation(self, vtkself, port, info)
+     |      Sets the required input type to InputType.
+     |  
+     |  FillOutputPortInformation(self, vtkself, port, info)
+     |      Sets the default output type to OutputType.
+     |  
+     |  GetInputData(self, inInfo, i, j)
+     |      Convenience method that returns an input data object
+     |      given a vector of information objects and two indices.
+     |  
+     |  GetOutputData(self, outInfo, i)
+     |      Convenience method that returns an output data object
+     |      given an information object and an index.
+     |  
+     |  Initialize(self, vtkself)
+     |      Sets up number of input and output ports based on
+     |      NumberOfInputPorts and NumberOfOutputPorts.
+     |  
+     |  ProcessRequest(self, vtkself, request, inInfo, outInfo)
+     |      Splits a request to RequestXXX() methods.
+     |  
+     |  RequestData(self, vtkself, request, inInfo, outInfo)
+     |      Overwritten by subclass to execute the algorithm.
+     |  
+     |  RequestDataObject(self, vtkself, request, inInfo, outInfo)
+     |      Overwritten by subclass to manage data object creation.
+     |      There is not need to overwrite this class if the output can
+     |      be created based on the OutputType data member.
+     |  
+     |  RequestInformation(self, vtkself, request, inInfo, outInfo)
+     |      Overwritten by subclass to provide meta-data to downstream
+     |      pipeline.
+     |  
+     |  RequestUpdateExtent(self, vtkself, request, inInfo, outInfo)
+     |      Overwritten by subclass to modify data request going
+     |      to upstream pipeline.
+     |  
+     |  __init__(self, nInputPorts=1, inputType='vtkDataSet', nOutputPorts=1, outputType='vtkPolyData')
+     |      Sets up default NumberOfInputPorts, NumberOfOutputPorts,
+     |      InputType and OutputType that are used by various initialization
+     |      methods.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class VTKPythonAlgorithmBase(vtkmodules.vtkFiltersPython.vtkPythonAlgorithm)
+     |  VTKPythonAlgorithmBase(nInputPorts=1, inputType='vtkDataSet', nOutputPorts=1, outputType='vtkPolyData')
+     |  
+     |  This is a superclass which can be derived to implement
+     |  Python classes that act as VTK algorithms in a VTK pipeline.
+     |  It implements ProcessRequest(), FillInputPortInformation() and
+     |  FillOutputPortInformation().
+     |  
+     |  ProcessRequest() calls RequestXXX() methods to implement
+     |  various pipeline passes.
+     |  
+     |  FillInputPortInformation() and FillOutputPortInformation() set
+     |  the input and output types based on data members.
+     |  
+     |  Common use is something like this:
+     |  
+     |  class HDF5Source(VTKPythonAlgorithmBase):
+     |      def __init__(self):
+     |          VTKPythonAlgorithmBase.__init__(self,
+     |              nInputPorts=0,
+     |              nOutputPorts=1, outputType='vtkImageData')
+     |  
+     |      def RequestInformation(self, request, inInfo, outInfo):
+     |          f = h5py.File("foo.h5", 'r')
+     |          dims = f['RTData'].shape[::-1]
+     |          info = outInfo.GetInformationObject(0)
+     |          info.Set(vtkmodules.vtkCommonExecutionModel.vtkStreamingDemandDrivenPipeline.WHOLE_EXTENT(),
+     |              (0, dims[0]-1, 0, dims[1]-1, 0, dims[2]-1), 6)
+     |          return 1
+     |  
+     |      def RequestData(self, request, inInfo, outInfo):
+     |          f = h5py.File("foo.h5", 'r')
+     |          data = f['RTData'][:]
+     |          output = dsa.WrapDataObject(vtkmodules.vtkCommonDataModel.vtkImageData.GetData(outInfo))
+     |          output.SetDimensions(data.shape)
+     |          output.PointData.append(data.flatten(), 'RTData')
+     |          output.PointData.SetActiveScalars('RTData')
+     |          return 1
+     |  
+     |  alg = HDF5Source()
+     |  
+     |  cf = vtkmodules.vtkFiltersCore.vtkContourFilter()
+     |  cf.SetInputConnection(alg.GetOutputPort())
+     |  cf.Update()
+     |  
+     |  Method resolution order:
+     |      VTKPythonAlgorithmBase
+     |      vtkmodules.vtkFiltersPython.vtkPythonAlgorithm
+     |      vtkmodules.vtkCommonExecutionModel.vtkAlgorithm
+     |      vtkmodules.vtkCommonCore.vtkObject
+     |      vtkmodules.vtkCommonCore.vtkObjectBase
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  FillInputPortInformation(self, port, info)
+     |      Sets the required input type to InputType.
+     |  
+     |  FillOutputPortInformation(self, port, info)
+     |      Sets the default output type to OutputType.
+     |  
+     |  GetInputData(self, inInfo, i, j)
+     |      Convenience method that returns an input data object
+     |      given a vector of information objects and two indices.
+     |  
+     |  GetOutputData(self, outInfo, i)
+     |      Convenience method that returns an output data object
+     |      given an information object and an index.
+     |  
+     |  ProcessRequest(self, request, inInfo, outInfo)
+     |      Splits a request to RequestXXX() methods.
+     |  
+     |  RequestData(self, request, inInfo, outInfo)
+     |      Overwritten by subclass to execute the algorithm.
+     |  
+     |  RequestDataObject(self, request, inInfo, outInfo)
+     |      Overwritten by subclass to manage data object creation.
+     |      There is not need to overwrite this class if the output can
+     |      be created based on the OutputType data member.
+     |  
+     |  RequestInformation(self, request, inInfo, outInfo)
+     |      Overwritten by subclass to provide meta-data to downstream
+     |      pipeline.
+     |  
+     |  RequestUpdateExtent(self, request, inInfo, outInfo)
+     |      Overwritten by subclass to modify data request going
+     |      to upstream pipeline.
+     |  
+     |  __init__(self, nInputPorts=1, inputType='vtkDataSet', nOutputPorts=1, outputType='vtkPolyData')
+     |      Sets up default NumberOfInputPorts, NumberOfOutputPorts,
+     |      InputType and OutputType that are used by various methods.
+     |      Make sure to call this method from any subclass' __init__
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |  
+     |  InternalAlgorithm = <class 'paraview.vtk.util.vtkAlgorithm.VTKPythonAl...
+     |      Internal class. Do not use.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from vtkmodules.vtkFiltersPython.vtkPythonAlgorithm:
+     |  
+     |  GetNumberOfGenerationsFromBase(...)
+     |      V.GetNumberOfGenerationsFromBase(string) -> int
+     |      C++: vtkIdType GetNumberOfGenerationsFromBase(const char *type)
+     |          override;
+     |      
+     |      Given the name of a base class of this class type, return the
+     |      distance of inheritance between this class type and the named
+     |      class (how many generations of inheritance are there between this
+     |      class and the named class). If the named class is not in this
+     |      class's inheritance tree, return a negative value. Valid
+     |      responses will always be nonnegative. This method works in
+     |      combination with vtkTypeMacro found in vtkSetGet.h.
+     |  
+     |  GetNumberOfGenerationsFromBaseType(...)
+     |      V.GetNumberOfGenerationsFromBaseType(string) -> int
+     |      C++: static vtkIdType GetNumberOfGenerationsFromBaseType(
+     |          const char *type)
+     |      
+     |      Given a the name of a base class of this class type, return the
+     |      distance of inheritance between this class type and the named
+     |      class (how many generations of inheritance are there between this
+     |      class and the named class). If the named class is not in this
+     |      class's inheritance tree, return a negative value. Valid
+     |      responses will always be nonnegative. This method works in
+     |      combination with vtkTypeMacro found in vtkSetGet.h.
+     |  
+     |  IsA(...)
+     |      V.IsA(string) -> int
+     |      C++: vtkTypeBool IsA(const char *type) override;
+     |      
+     |      Return 1 if this class is the same type of (or a subclass of) the
+     |      named class. Returns 0 otherwise. This method works in
+     |      combination with vtkTypeMacro found in vtkSetGet.h.
+     |  
+     |  IsTypeOf(...)
+     |      V.IsTypeOf(string) -> int
+     |      C++: static vtkTypeBool IsTypeOf(const char *type)
+     |      
+     |      Return 1 if this class type is the same type of (or a subclass
+     |      of) the named class. Returns 0 otherwise. This method works in
+     |      combination with vtkTypeMacro found in vtkSetGet.h.
+     |  
+     |  NewInstance(...)
+     |      V.NewInstance() -> vtkPythonAlgorithm
+     |      C++: vtkPythonAlgorithm *NewInstance()
+     |  
+     |  SafeDownCast(...)
+     |      V.SafeDownCast(vtkObjectBase) -> vtkPythonAlgorithm
+     |      C++: static vtkPythonAlgorithm *SafeDownCast(vtkObjectBase *o)
+     |  
+     |  SetNumberOfInputPorts(...)
+     |      V.SetNumberOfInputPorts(int)
+     |      C++: void SetNumberOfInputPorts(int n) override;
+     |      
+     |      Set the number of input ports used by the algorithm. This is made
+     |      public so that it can be called from Python.
+     |  
+     |  SetNumberOfOutputPorts(...)
+     |      V.SetNumberOfOutputPorts(int)
+     |      C++: void SetNumberOfOutputPorts(int n) override;
+     |      
+     |      Set the number of output ports provided by the algorithm. This is
+     |      made public so that it can be called from Python.
+     |  
+     |  SetPythonObject(...)
+     |      V.SetPythonObject(PyObject)
+     |      C++: void SetPythonObject(PyObject *obj)
+     |      
+     |      Specify the Python object to use to operate on the data. A
+     |      reference will be taken on the object. This will also invoke
+     |      Initialize() on the Python object, which is commonly used to set
+     |      the number of input and output ports as well as perform tasks
+     |      commonly performed in the constructor of C++ algorithm subclass.
+     |  
+     |  __delattr__(self, name, /)
+     |      Implement delattr(self, name).
+     |  
+     |  __getattribute__(self, name, /)
+     |      Return getattr(self, name).
+     |  
+     |  __repr__(self, /)
+     |      Return repr(self).
+     |  
+     |  __setattr__(self, name, value, /)
+     |      Implement setattr(self, name, value).
+     |  
+     |  __str__(self, /)
+     |      Return str(self).
+     |  
+     |  ----------------------------------------------------------------------
+     |  Static methods inherited from vtkmodules.vtkFiltersPython.vtkPythonAlgorithm:
+     |  
+     |  __new__(*args, **kwargs) from builtins.type
+     |      Create and return a new object.  See help(type) for accurate signature.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from vtkmodules.vtkFiltersPython.vtkPythonAlgorithm:
+     |  
+     |  __dict__
+     |      Dictionary of attributes set by user.
+     |  
+     |  __this__
+     |      Pointer to the C++ object.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from vtkmodules.vtkFiltersPython.vtkPythonAlgorithm:
+     |  
+     |  __vtkname__ = 'vtkPythonAlgorithm'
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from vtkmodules.vtkCommonExecutionModel.vtkAlgorithm:
+     |  
+     |  AbortExecuteOff(...)
+     |      V.AbortExecuteOff()
+     |      C++: virtual void AbortExecuteOff()
+     |      
+     |      Set/Get the AbortExecute flag for the process object. Process
+     |      objects may handle premature termination of execution in
+     |      different ways.
+     |  
+     |  AbortExecuteOn(...)
+     |      V.AbortExecuteOn()
+     |      C++: virtual void AbortExecuteOn()
+     |      
+     |      Set/Get the AbortExecute flag for the process object. Process
+     |      objects may handle premature termination of execution in
+     |      different ways.
+     |  
+     |  AddInputConnection(...)
+     |      V.AddInputConnection(int, vtkAlgorithmOutput)
+     |      C++: virtual void AddInputConnection(int port,
+     |          vtkAlgorithmOutput *input)
+     |      V.AddInputConnection(vtkAlgorithmOutput)
+     |      C++: virtual void AddInputConnection(vtkAlgorithmOutput *input)
+     |      
+     |      Add a connection to the given input port index.  See
+     |      SetInputConnection() for details on input connections.  This
+     |      method is the complement to RemoveInputConnection() in that it
+     |      adds only the connection specified without affecting other
+     |      connections.  Typical usage is
+     |      
+     |      * filter2->AddInputConnection(0, filter1->GetOutputPort(0)).
+     |  
+     |  AddInputDataObject(...)
+     |      V.AddInputDataObject(int, vtkDataObject)
+     |      C++: virtual void AddInputDataObject(int port,
+     |          vtkDataObject *data)
+     |      V.AddInputDataObject(vtkDataObject)
+     |      C++: virtual void AddInputDataObject(vtkDataObject *data)
+     |      
+     |      Add the data-object as an input to this given port. This will add
+     |      a new input connection on the specified port without affecting
+     |      any existing connections on the same input port.
+     |  
+     |  CAN_HANDLE_PIECE_REQUEST(...)
+     |      V.CAN_HANDLE_PIECE_REQUEST() -> vtkInformationIntegerKey
+     |      C++: static vtkInformationIntegerKey *CAN_HANDLE_PIECE_REQUEST()
+     |      
+     |      Key that tells the pipeline that a particular algorithm can or
+     |      cannot handle piece request. If a filter cannot handle piece
+     |      requests and is asked for a piece, the executive will flag an
+     |      error. If a structured data source cannot handle piece requests
+     |      but can produce sub-extents (CAN_PRODUCE_SUB_EXTENT), the
+     |      executive will use an extent translator to split the extent into
+     |      pieces. Otherwise, if a source cannot handle piece requests, the
+     |      executive will ask for the whole data for piece 0 and not execute
+     |      the source for other pieces.\ingroup InformationKeys
+     |  
+     |  CAN_PRODUCE_SUB_EXTENT(...)
+     |      V.CAN_PRODUCE_SUB_EXTENT() -> vtkInformationIntegerKey
+     |      C++: static vtkInformationIntegerKey *CAN_PRODUCE_SUB_EXTENT()
+     |      
+     |      This key tells the executive that a particular output port is
+     |      capable of producing an arbitrary subextent of the whole extent.
+     |      Many image sources and readers fall into this category but some
+     |      such as the legacy structured data readers cannot support this
+     |      feature.\ingroup InformationKeys
+     |  
+     |  ConvertTotalInputToPortConnection(...)
+     |      V.ConvertTotalInputToPortConnection(int, int, int)
+     |      C++: void ConvertTotalInputToPortConnection(int ind, int &port,
+     |          int &conn)
+     |      
+     |      Convenience routine to convert from a linear ordering of input
+     |      connections to a port/connection pair.
+     |  
+     |  GetAbortExecute(...)
+     |      V.GetAbortExecute() -> int
+     |      C++: virtual vtkTypeBool GetAbortExecute()
+     |      
+     |      Set/Get the AbortExecute flag for the process object. Process
+     |      objects may handle premature termination of execution in
+     |      different ways.
+     |  
+     |  GetErrorCode(...)
+     |      V.GetErrorCode() -> int
+     |      C++: virtual unsigned long GetErrorCode()
+     |      
+     |      The error code contains a possible error that occurred while
+     |      reading or writing the file.
+     |  
+     |  GetExecutive(...)
+     |      V.GetExecutive() -> vtkExecutive
+     |      C++: vtkExecutive *GetExecutive()
+     |      
+     |      Get this algorithm's executive.  If it has none, a default
+     |      executive will be created.
+     |  
+     |  GetInformation(...)
+     |      V.GetInformation() -> vtkInformation
+     |      C++: virtual vtkInformation *GetInformation()
+     |      
+     |      Set/Get the information object associated with this algorithm.
+     |  
+     |  GetInputAlgorithm(...)
+     |      V.GetInputAlgorithm(int, int, int) -> vtkAlgorithm
+     |      C++: vtkAlgorithm *GetInputAlgorithm(int port, int index,
+     |          int &algPort)
+     |      V.GetInputAlgorithm(int, int) -> vtkAlgorithm
+     |      C++: vtkAlgorithm *GetInputAlgorithm(int port, int index)
+     |      V.GetInputAlgorithm() -> vtkAlgorithm
+     |      C++: vtkAlgorithm *GetInputAlgorithm()
+     |      
+     |      Returns the algorithm and the output port index of that algorithm
+     |      connected to a port-index pair.
+     |  
+     |  GetInputArrayInformation(...)
+     |      V.GetInputArrayInformation(int) -> vtkInformation
+     |      C++: vtkInformation *GetInputArrayInformation(int idx)
+     |      
+     |      Get the info object for the specified input array to this
+     |      algorithm
+     |  
+     |  GetInputConnection(...)
+     |      V.GetInputConnection(int, int) -> vtkAlgorithmOutput
+     |      C++: vtkAlgorithmOutput *GetInputConnection(int port, int index)
+     |      
+     |      Get the algorithm output port connected to an input port.
+     |  
+     |  GetInputDataObject(...)
+     |      V.GetInputDataObject(int, int) -> vtkDataObject
+     |      C++: vtkDataObject *GetInputDataObject(int port, int connection)
+     |      
+     |      Get the data object that will contain the algorithm input for the
+     |      given port and given connection.
+     |  
+     |  GetInputExecutive(...)
+     |      V.GetInputExecutive(int, int) -> vtkExecutive
+     |      C++: vtkExecutive *GetInputExecutive(int port, int index)
+     |      V.GetInputExecutive() -> vtkExecutive
+     |      C++: vtkExecutive *GetInputExecutive()
+     |      
+     |      Returns the executive associated with a particular input
+     |      connection.
+     |  
+     |  GetInputInformation(...)
+     |      V.GetInputInformation(int, int) -> vtkInformation
+     |      C++: vtkInformation *GetInputInformation(int port, int index)
+     |      V.GetInputInformation() -> vtkInformation
+     |      C++: vtkInformation *GetInputInformation()
+     |      
+     |      Return the information object that is associated with a
+     |      particular input connection. This can be used to get meta-data
+     |      coming from the REQUEST_INFORMATION pass and set requests for the
+     |      REQUEST_UPDATE_EXTENT pass. NOTE: Do not use this in any of the
+     |      pipeline passes. Use the information objects passed as arguments
+     |      instead.
+     |  
+     |  GetInputPortInformation(...)
+     |      V.GetInputPortInformation(int) -> vtkInformation
+     |      C++: vtkInformation *GetInputPortInformation(int port)
+     |      
+     |      Get the information object associated with an input port.  There
+     |      is one input port per kind of input to the algorithm.  Each input
+     |      port tells executives what kind of data and downstream requests
+     |      this algorithm can handle for that input.
+     |  
+     |  GetNumberOfInputConnections(...)
+     |      V.GetNumberOfInputConnections(int) -> int
+     |      C++: int GetNumberOfInputConnections(int port)
+     |      
+     |      Get the number of inputs currently connected to a port.
+     |  
+     |  GetNumberOfInputPorts(...)
+     |      V.GetNumberOfInputPorts() -> int
+     |      C++: int GetNumberOfInputPorts()
+     |      
+     |      Get the number of input ports used by the algorithm.
+     |  
+     |  GetNumberOfOutputPorts(...)
+     |      V.GetNumberOfOutputPorts() -> int
+     |      C++: int GetNumberOfOutputPorts()
+     |      
+     |      Get the number of output ports provided by the algorithm.
+     |  
+     |  GetOutputDataObject(...)
+     |      V.GetOutputDataObject(int) -> vtkDataObject
+     |      C++: vtkDataObject *GetOutputDataObject(int port)
+     |      
+     |      Get the data object that will contain the algorithm output for
+     |      the given port.
+     |  
+     |  GetOutputInformation(...)
+     |      V.GetOutputInformation(int) -> vtkInformation
+     |      C++: vtkInformation *GetOutputInformation(int port)
+     |      
+     |      Return the information object that is associated with a
+     |      particular output port. This can be used to set meta-data coming
+     |      during the REQUEST_INFORMATION. NOTE: Do not use this in any of
+     |      the pipeline passes. Use the information objects passed as
+     |      arguments instead.
+     |  
+     |  GetOutputPort(...)
+     |      V.GetOutputPort(int) -> vtkAlgorithmOutput
+     |      C++: vtkAlgorithmOutput *GetOutputPort(int index)
+     |      V.GetOutputPort() -> vtkAlgorithmOutput
+     |      C++: vtkAlgorithmOutput *GetOutputPort()
+     |      
+     |      Get a proxy object corresponding to the given output port of this
+     |      algorithm.  The proxy object can be passed to another algorithm's
+     |      SetInputConnection(), AddInputConnection(), and
+     |      RemoveInputConnection() methods to modify pipeline connectivity.
+     |  
+     |  GetOutputPortInformation(...)
+     |      V.GetOutputPortInformation(int) -> vtkInformation
+     |      C++: vtkInformation *GetOutputPortInformation(int port)
+     |      
+     |      Get the information object associated with an output port.  There
+     |      is one output port per output from the algorithm.  Each output
+     |      port tells executives what kind of upstream requests this
+     |      algorithm can handle for that output.
+     |  
+     |  GetProgress(...)
+     |      V.GetProgress() -> float
+     |      C++: virtual double GetProgress()
+     |      
+     |      Get the execution progress of a process object.
+     |  
+     |  GetProgressObserver(...)
+     |      V.GetProgressObserver() -> vtkProgressObserver
+     |      C++: virtual vtkProgressObserver *GetProgressObserver()
+     |      
+     |      If an ProgressObserver is set, the algorithm will report progress
+     |      through it rather than directly. This means that it will call
+     |      UpdateProgress() on the ProgressObserver rather than itself
+     |      report it and set progress. This is most useful in situations
+     |      where multiple threads are executing an algorithm at the same
+     |      time and want to handle progress locally.
+     |  
+     |  GetProgressScale(...)
+     |      V.GetProgressScale() -> float
+     |      C++: virtual double GetProgressScale()
+     |      
+     |      Specify the shift and scale values to use to apply to the
+     |      progress amount when `UpdateProgress` is called. By default shift
+     |      is set to 0, and scale is set to 1.0. This is useful when the
+     |      vtkAlgorithm instance is used as an internal algorithm to solve
+     |      only a part of a whole problem.
+     |      
+     |      If calling on a internal vtkAlgorithm, make sure you take into
+     |      consideration that values set of the outer vtkAlgorithm as well
+     |      since the outer vtkAlgorithm itself may be nested in another
+     |      algorithm.
+     |      
+     |      ote SetProgressShiftScale does not modify the MTime of the
+     |      algorithm.
+     |  
+     |  GetProgressShift(...)
+     |      V.GetProgressShift() -> float
+     |      C++: virtual double GetProgressShift()
+     |      
+     |      Specify the shift and scale values to use to apply to the
+     |      progress amount when `UpdateProgress` is called. By default shift
+     |      is set to 0, and scale is set to 1.0. This is useful when the
+     |      vtkAlgorithm instance is used as an internal algorithm to solve
+     |      only a part of a whole problem.
+     |      
+     |      If calling on a internal vtkAlgorithm, make sure you take into
+     |      consideration that values set of the outer vtkAlgorithm as well
+     |      since the outer vtkAlgorithm itself may be nested in another
+     |      algorithm.
+     |      
+     |      ote SetProgressShiftScale does not modify the MTime of the
+     |      algorithm.
+     |  
+     |  GetProgressText(...)
+     |      V.GetProgressText() -> string
+     |      C++: virtual char *GetProgressText()
+     |      
+     |      Set the current text message associated with the progress state.
+     |      This may be used by a calling process/GUI. Note: Because
+     |      SetProgressText() is called from inside RequestData() it does not
+     |      modify the algorithm object. Algorithms are not allowed to modify
+     |      themselves from inside RequestData().
+     |  
+     |  GetReleaseDataFlag(...)
+     |      V.GetReleaseDataFlag() -> int
+     |      C++: virtual int GetReleaseDataFlag()
+     |      
+     |      Turn release data flag on or off for all output ports.
+     |  
+     |  GetTotalNumberOfInputConnections(...)
+     |      V.GetTotalNumberOfInputConnections() -> int
+     |      C++: int GetTotalNumberOfInputConnections()
+     |      
+     |      Get the total number of inputs for this algorithm
+     |  
+     |  GetUpdateExtent(...)
+     |      V.GetUpdateExtent() -> (int, int, int, int, int, int)
+     |      C++: int *GetUpdateExtent()
+     |      V.GetUpdateExtent(int) -> (int, int, int, int, int, int)
+     |      C++: int *GetUpdateExtent(int port)
+     |      V.GetUpdateExtent(int, int, int, int, int, int)
+     |      C++: void GetUpdateExtent(int &x0, int &x1, int &y0, int &y1,
+     |          int &z0, int &z1)
+     |      V.GetUpdateExtent(int, int, int, int, int, int, int)
+     |      C++: void GetUpdateExtent(int port, int &x0, int &x1, int &y0,
+     |          int &y1, int &z0, int &z1)
+     |      V.GetUpdateExtent([int, int, int, int, int, int])
+     |      C++: void GetUpdateExtent(int extent[6])
+     |      V.GetUpdateExtent(int, [int, int, int, int, int, int])
+     |      C++: void GetUpdateExtent(int port, int extent[6])
+     |      
+     |      These functions return the update extent for output ports that
+     |      use 3D extents. Where port is not specified, it is assumed to be
+     |      0.
+     |  
+     |  GetUpdateGhostLevel(...)
+     |      V.GetUpdateGhostLevel() -> int
+     |      C++: int GetUpdateGhostLevel()
+     |      V.GetUpdateGhostLevel(int) -> int
+     |      C++: int GetUpdateGhostLevel(int port)
+     |      
+     |      These functions return the update extent for output ports that
+     |      use piece extents. Where port is not specified, it is assumed to
+     |      be 0.
+     |  
+     |  GetUpdateNumberOfPieces(...)
+     |      V.GetUpdateNumberOfPieces() -> int
+     |      C++: int GetUpdateNumberOfPieces()
+     |      V.GetUpdateNumberOfPieces(int) -> int
+     |      C++: int GetUpdateNumberOfPieces(int port)
+     |      
+     |      These functions return the update extent for output ports that
+     |      use piece extents. Where port is not specified, it is assumed to
+     |      be 0.
+     |  
+     |  GetUpdatePiece(...)
+     |      V.GetUpdatePiece() -> int
+     |      C++: int GetUpdatePiece()
+     |      V.GetUpdatePiece(int) -> int
+     |      C++: int GetUpdatePiece(int port)
+     |      
+     |      These functions return the update extent for output ports that
+     |      use piece extents. Where port is not specified, it is assumed to
+     |      be 0.
+     |  
+     |  HasExecutive(...)
+     |      V.HasExecutive() -> int
+     |      C++: int HasExecutive()
+     |      
+     |      Check whether this algorithm has an assigned executive.  This
+     |      will NOT create a default executive.
+     |  
+     |  INPUT_ARRAYS_TO_PROCESS(...)
+     |      V.INPUT_ARRAYS_TO_PROCESS() -> vtkInformationInformationVectorKey
+     |      C++: static vtkInformationInformationVectorKey *INPUT_ARRAYS_TO_PROCESS(
+     |          )
+     |      
+     |      \ingroup InformationKeys
+     |  
+     |  INPUT_CONNECTION(...)
+     |      V.INPUT_CONNECTION() -> vtkInformationIntegerKey
+     |      C++: static vtkInformationIntegerKey *INPUT_CONNECTION()
+     |      
+     |      \ingroup InformationKeys
+     |  
+     |  INPUT_IS_OPTIONAL(...)
+     |      V.INPUT_IS_OPTIONAL() -> vtkInformationIntegerKey
+     |      C++: static vtkInformationIntegerKey *INPUT_IS_OPTIONAL()
+     |      
+     |      Keys used to specify input port requirements.\ingroup
+     |      InformationKeys
+     |  
+     |  INPUT_IS_REPEATABLE(...)
+     |      V.INPUT_IS_REPEATABLE() -> vtkInformationIntegerKey
+     |      C++: static vtkInformationIntegerKey *INPUT_IS_REPEATABLE()
+     |      
+     |      \ingroup InformationKeys
+     |  
+     |  INPUT_PORT(...)
+     |      V.INPUT_PORT() -> vtkInformationIntegerKey
+     |      C++: static vtkInformationIntegerKey *INPUT_PORT()
+     |      
+     |      \ingroup InformationKeys
+     |  
+     |  INPUT_REQUIRED_DATA_TYPE(...)
+     |      V.INPUT_REQUIRED_DATA_TYPE() -> vtkInformationStringVectorKey
+     |      C++: static vtkInformationStringVectorKey *INPUT_REQUIRED_DATA_TYPE(
+     |          )
+     |      
+     |      \ingroup InformationKeys
+     |  
+     |  INPUT_REQUIRED_FIELDS(...)
+     |      V.INPUT_REQUIRED_FIELDS() -> vtkInformationInformationVectorKey
+     |      C++: static vtkInformationInformationVectorKey *INPUT_REQUIRED_FIELDS(
+     |          )
+     |      
+     |      \ingroup InformationKeys
+     |  
+     |  ModifyRequest(...)
+     |      V.ModifyRequest(vtkInformation, int) -> int
+     |      C++: virtual int ModifyRequest(vtkInformation *request, int when)
+     |      
+     |      This method gives the algorithm a chance to modify the contents
+     |      of a request before or after (specified in the when argument) it
+     |      is forwarded. The default implementation is empty. Returns 1 on
+     |      success, 0 on failure. When can be either
+     |      vtkExecutive::BeforeForward or vtkExecutive::AfterForward.
+     |  
+     |  PropagateUpdateExtent(...)
+     |      V.PropagateUpdateExtent()
+     |      C++: virtual void PropagateUpdateExtent()
+     |      
+     |      Propagate meta-data upstream.
+     |  
+     |  ReleaseDataFlagOff(...)
+     |      V.ReleaseDataFlagOff()
+     |      C++: void ReleaseDataFlagOff()
+     |      
+     |      Turn release data flag on or off for all output ports.
+     |  
+     |  ReleaseDataFlagOn(...)
+     |      V.ReleaseDataFlagOn()
+     |      C++: void ReleaseDataFlagOn()
+     |      
+     |      Turn release data flag on or off for all output ports.
+     |  
+     |  RemoveAllInputConnections(...)
+     |      V.RemoveAllInputConnections(int)
+     |      C++: virtual void RemoveAllInputConnections(int port)
+     |      
+     |      Removes all input connections.
+     |  
+     |  RemoveAllInputs(...)
+     |      V.RemoveAllInputs()
+     |      C++: void RemoveAllInputs()
+     |      
+     |      Remove all the input data.
+     |  
+     |  RemoveInputConnection(...)
+     |      V.RemoveInputConnection(int, vtkAlgorithmOutput)
+     |      C++: virtual void RemoveInputConnection(int port,
+     |          vtkAlgorithmOutput *input)
+     |      V.RemoveInputConnection(int, int)
+     |      C++: virtual void RemoveInputConnection(int port, int idx)
+     |      
+     |      Remove a connection from the given input port index.  See
+     |      SetInputConnection() for details on input connection.  This
+     |      method is the complement to AddInputConnection() in that it
+     |      removes only the connection specified without affecting other
+     |      connections.  Typical usage is
+     |      
+     |      * filter2->RemoveInputConnection(0, filter1->GetOutputPort(0)).
+     |  
+     |  SetAbortExecute(...)
+     |      V.SetAbortExecute(int)
+     |      C++: virtual void SetAbortExecute(vtkTypeBool _arg)
+     |      
+     |      Set/Get the AbortExecute flag for the process object. Process
+     |      objects may handle premature termination of execution in
+     |      different ways.
+     |  
+     |  SetDefaultExecutivePrototype(...)
+     |      V.SetDefaultExecutivePrototype(vtkExecutive)
+     |      C++: static void SetDefaultExecutivePrototype(vtkExecutive *proto)
+     |      
+     |      If the DefaultExecutivePrototype is set, a copy of it is created
+     |      in CreateDefaultExecutive() using NewInstance().
+     |  
+     |  SetExecutive(...)
+     |      V.SetExecutive(vtkExecutive)
+     |      C++: virtual void SetExecutive(vtkExecutive *executive)
+     |      
+     |      Set this algorithm's executive.  This algorithm is removed from
+     |      any executive to which it has previously been assigned and then
+     |      assigned to the given executive.
+     |  
+     |  SetInformation(...)
+     |      V.SetInformation(vtkInformation)
+     |      C++: virtual void SetInformation(vtkInformation *)
+     |      
+     |      Set/Get the information object associated with this algorithm.
+     |  
+     |  SetInputArrayToProcess(...)
+     |      V.SetInputArrayToProcess(int, int, int, int, string)
+     |      C++: virtual void SetInputArrayToProcess(int idx, int port,
+     |          int connection, int fieldAssociation, const char *name)
+     |      V.SetInputArrayToProcess(int, int, int, int, int)
+     |      C++: virtual void SetInputArrayToProcess(int idx, int port,
+     |          int connection, int fieldAssociation, int fieldAttributeType)
+     |      V.SetInputArrayToProcess(int, vtkInformation)
+     |      C++: virtual void SetInputArrayToProcess(int idx,
+     |          vtkInformation *info)
+     |      V.SetInputArrayToProcess(int, int, int, string, string)
+     |      C++: virtual void SetInputArrayToProcess(int idx, int port,
+     |          int connection, const char *fieldAssociation,
+     |          const char *attributeTypeorName)
+     |      
+     |      Set the input data arrays that this algorithm will process.
+     |      Specifically the idx array that this algorithm will process
+     |      (starting from 0) is the array on port, connection with the
+     |      specified association and name or attribute type (such as
+     |      SCALARS). The fieldAssociation refers to which field in the data
+     |      object the array is stored. See vtkDataObject::FieldAssociations
+     |      for detail.
+     |  
+     |  SetInputConnection(...)
+     |      V.SetInputConnection(int, vtkAlgorithmOutput)
+     |      C++: virtual void SetInputConnection(int port,
+     |          vtkAlgorithmOutput *input)
+     |      V.SetInputConnection(vtkAlgorithmOutput)
+     |      C++: virtual void SetInputConnection(vtkAlgorithmOutput *input)
+     |      
+     |      Set the connection for the given input port index.  Each input
+     |      port of a filter has a specific purpose.  A port may have zero or
+     |      more connections and the required number is specified by each
+     |      filter.  Setting the connection with this method removes all
+     |      other connections from the port.  To add more than one connection
+     |      use AddInputConnection().
+     |      
+     |      * The input for the connection is the output port of another
+     |      * filter, which is obtained with GetOutputPort().  Typical usage
+     |        is
+     |      
+     |      * filter2->SetInputConnection(0, filter1->GetOutputPort(0)).
+     |  
+     |  SetInputDataObject(...)
+     |      V.SetInputDataObject(int, vtkDataObject)
+     |      C++: virtual void SetInputDataObject(int port,
+     |          vtkDataObject *data)
+     |      V.SetInputDataObject(vtkDataObject)
+     |      C++: virtual void SetInputDataObject(vtkDataObject *data)
+     |      
+     |      Sets the data-object as an input on the given port index. Setting
+     |      the input with this method removes all other connections from the
+     |      port. Internally, this method creates a vtkTrivialProducer
+     |      instance and sets that as the input-connection for the given
+     |      port. It is safe to call this method repeatedly with the same
+     |      input data object. The MTime of the vtkAlgorithm will not change
+     |      unless the data object changed.
+     |  
+     |  SetProgress(...)
+     |      V.SetProgress(float)
+     |      C++: void SetProgress(double)
+     |      
+     |      `SetProgress` is deprecated. Subclasses should use
+     |      `UpdateProgress` to report progress updates.
+     |  
+     |  SetProgressObserver(...)
+     |      V.SetProgressObserver(vtkProgressObserver)
+     |      C++: void SetProgressObserver(vtkProgressObserver *)
+     |      
+     |      If an ProgressObserver is set, the algorithm will report progress
+     |      through it rather than directly. This means that it will call
+     |      UpdateProgress() on the ProgressObserver rather than itself
+     |      report it and set progress. This is most useful in situations
+     |      where multiple threads are executing an algorithm at the same
+     |      time and want to handle progress locally.
+     |  
+     |  SetProgressShiftScale(...)
+     |      V.SetProgressShiftScale(float, float)
+     |      C++: void SetProgressShiftScale(double shift, double scale)
+     |      
+     |      Specify the shift and scale values to use to apply to the
+     |      progress amount when `UpdateProgress` is called. By default shift
+     |      is set to 0, and scale is set to 1.0. This is useful when the
+     |      vtkAlgorithm instance is used as an internal algorithm to solve
+     |      only a part of a whole problem.
+     |      
+     |      If calling on a internal vtkAlgorithm, make sure you take into
+     |      consideration that values set of the outer vtkAlgorithm as well
+     |      since the outer vtkAlgorithm itself may be nested in another
+     |      algorithm.
+     |      
+     |      ote SetProgressShiftScale does not modify the MTime of the
+     |      algorithm.
+     |  
+     |  SetProgressText(...)
+     |      V.SetProgressText(string)
+     |      C++: void SetProgressText(const char *ptext)
+     |      
+     |      Set the current text message associated with the progress state.
+     |      This may be used by a calling process/GUI. Note: Because
+     |      SetProgressText() is called from inside RequestData() it does not
+     |      modify the algorithm object. Algorithms are not allowed to modify
+     |      themselves from inside RequestData().
+     |  
+     |  SetReleaseDataFlag(...)
+     |      V.SetReleaseDataFlag(int)
+     |      C++: virtual void SetReleaseDataFlag(int)
+     |      
+     |      Turn release data flag on or off for all output ports.
+     |  
+     |  Update(...)
+     |      V.Update(int)
+     |      C++: virtual void Update(int port)
+     |      V.Update()
+     |      C++: virtual void Update()
+     |      V.Update(int, vtkInformationVector) -> int
+     |      C++: virtual vtkTypeBool Update(int port,
+     |          vtkInformationVector *requests)
+     |      V.Update(vtkInformation) -> int
+     |      C++: virtual vtkTypeBool Update(vtkInformation *requests)
+     |      
+     |      Bring this algorithm's outputs up-to-date.
+     |  
+     |  UpdateDataObject(...)
+     |      V.UpdateDataObject()
+     |      C++: virtual void UpdateDataObject()
+     |      
+     |      Create output object(s).
+     |  
+     |  UpdateExtent(...)
+     |      V.UpdateExtent((int, int, int, int, int, int)) -> int
+     |      C++: virtual int UpdateExtent(const int extents[6])
+     |      
+     |      Convenience method to update an algorithm after passing requests
+     |      to its first output port. Supports extent request.
+     |  
+     |  UpdateExtentIsEmpty(...)
+     |      V.UpdateExtentIsEmpty(vtkInformation, vtkDataObject) -> int
+     |      C++: int UpdateExtentIsEmpty(vtkInformation *pinfo,
+     |          vtkDataObject *output)
+     |      V.UpdateExtentIsEmpty(vtkInformation, int) -> int
+     |      C++: int UpdateExtentIsEmpty(vtkInformation *pinfo,
+     |          int extentType)
+     |      
+     |      This detects when the UpdateExtent will generate no data This
+     |      condition is satisfied when the UpdateExtent has zero volume
+     |      (0,-1,...) or the UpdateNumberOfPieces is 0. The source uses this
+     |      call to determine whether to call Execute.
+     |  
+     |  UpdateInformation(...)
+     |      V.UpdateInformation()
+     |      C++: virtual void UpdateInformation()
+     |      
+     |      Bring the algorithm's information up-to-date.
+     |  
+     |  UpdatePiece(...)
+     |      V.UpdatePiece(int, int, int, (int, int, int, int, int, int))
+     |          -> int
+     |      C++: virtual int UpdatePiece(int piece, int numPieces,
+     |          int ghostLevels, const int extents[6]=nullptr)
+     |      
+     |      Convenience method to update an algorithm after passing requests
+     |      to its first output port. See documentation for Update(int port,
+     |      vtkInformationVector* requests) for details. Supports piece and
+     |      extent (optional) requests.
+     |  
+     |  UpdateProgress(...)
+     |      V.UpdateProgress(float)
+     |      C++: void UpdateProgress(double amount)
+     |      
+     |      Update the progress of the process object. If a ProgressMethod
+     |      exists, executes it.  Then set the Progress ivar to amount. The
+     |      parameter amount should range between (0,1).
+     |  
+     |  UpdateTimeStep(...)
+     |      V.UpdateTimeStep(float, int, int, int, (int, int, int, int, int,
+     |          int)) -> int
+     |      C++: virtual int UpdateTimeStep(double time, int piece=-1,
+     |          int numPieces=1, int ghostLevels=0,
+     |          const int extents[6]=nullptr)
+     |      
+     |      Convenience method to update an algorithm after passing requests
+     |      to its first output port. See documentation for Update(int port,
+     |      vtkInformationVector* requests) for details. Supports time, piece
+     |      (optional) and extent (optional) requests.
+     |  
+     |  UpdateWholeExtent(...)
+     |      V.UpdateWholeExtent()
+     |      C++: virtual void UpdateWholeExtent()
+     |      
+     |      Bring this algorithm's outputs up-to-date.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from vtkmodules.vtkCommonExecutionModel.vtkAlgorithm:
+     |  
+     |  DEFAULT_PRECISION = 2
+     |  
+     |  DOUBLE_PRECISION = 1
+     |  
+     |  DesiredOutputPrecision = <class 'vtkmodules.vtkCommonExecutionModel.vt...
+     |      int([x]) -> integer
+     |      int(x, base=10) -> integer
+     |      
+     |      Convert a number or string to an integer, or return 0 if no arguments
+     |      are given.  If x is a number, return x.__int__().  For floating point
+     |      numbers, this truncates towards zero.
+     |      
+     |      If x is not a number or if base is given, then x must be a string,
+     |      bytes, or bytearray instance representing an integer literal in the
+     |      given base.  The literal can be preceded by '+' or '-' and be surrounded
+     |      by whitespace.  The base defaults to 10.  Valid bases are 0 and 2-36.
+     |      Base 0 means to interpret the base from the string as an integer literal.
+     |      >>> int('0b100', base=0)
+     |      4
+     |  
+     |  SINGLE_PRECISION = 0
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from vtkmodules.vtkCommonCore.vtkObject:
+     |  
+     |  AddObserver(...)
+     |      V.AddObserver(int, function) -> int
+     |      C++: unsigned long AddObserver(const char *event,
+     |          vtkCommand *command, float priority=0.0f)
+     |      
+     |      Add an event callback function(vtkObject, int) for an event type.
+     |      Returns a handle that can be used with RemoveEvent(int).
+     |  
+     |  BreakOnError(...)
+     |      V.BreakOnError()
+     |      C++: static void BreakOnError()
+     |      
+     |      This method is called when vtkErrorMacro executes. It allows the
+     |      debugger to break on error.
+     |  
+     |  DebugOff(...)
+     |      V.DebugOff()
+     |      C++: virtual void DebugOff()
+     |      
+     |      Turn debugging output off.
+     |  
+     |  DebugOn(...)
+     |      V.DebugOn()
+     |      C++: virtual void DebugOn()
+     |      
+     |      Turn debugging output on.
+     |  
+     |  GetCommand(...)
+     |      V.GetCommand(int) -> vtkCommand
+     |      C++: vtkCommand *GetCommand(unsigned long tag)
+     |      
+     |      Allow people to add/remove/invoke observers (callbacks) to any
+     |      VTK object.  This is an implementation of the subject/observer
+     |      design pattern. An observer is added by specifying an event to
+     |      respond to and a vtkCommand to execute. It returns an unsigned
+     |      long tag which can be used later to remove the event or retrieve
+     |      the command. When events are invoked, the observers are called in
+     |      the order they were added. If a priority value is specified, then
+     |      the higher priority commands are called first. A command may set
+     |      an abort flag to stop processing of the event. (See vtkCommand.h
+     |      for more information.)
+     |  
+     |  GetDebug(...)
+     |      V.GetDebug() -> bool
+     |      C++: bool GetDebug()
+     |      
+     |      Get the value of the debug flag.
+     |  
+     |  GetGlobalWarningDisplay(...)
+     |      V.GetGlobalWarningDisplay() -> int
+     |      C++: static int GetGlobalWarningDisplay()
+     |      
+     |      This is a global flag that controls whether any debug, warning or
+     |      error messages are displayed.
+     |  
+     |  GetMTime(...)
+     |      V.GetMTime() -> int
+     |      C++: virtual vtkMTimeType GetMTime()
+     |      
+     |      Return this object's modified time.
+     |  
+     |  GlobalWarningDisplayOff(...)
+     |      V.GlobalWarningDisplayOff()
+     |      C++: static void GlobalWarningDisplayOff()
+     |      
+     |      This is a global flag that controls whether any debug, warning or
+     |      error messages are displayed.
+     |  
+     |  GlobalWarningDisplayOn(...)
+     |      V.GlobalWarningDisplayOn()
+     |      C++: static void GlobalWarningDisplayOn()
+     |      
+     |      This is a global flag that controls whether any debug, warning or
+     |      error messages are displayed.
+     |  
+     |  HasObserver(...)
+     |      V.HasObserver(int, vtkCommand) -> int
+     |      C++: vtkTypeBool HasObserver(unsigned long event, vtkCommand *)
+     |      V.HasObserver(string, vtkCommand) -> int
+     |      C++: vtkTypeBool HasObserver(const char *event, vtkCommand *)
+     |      V.HasObserver(int) -> int
+     |      C++: vtkTypeBool HasObserver(unsigned long event)
+     |      V.HasObserver(string) -> int
+     |      C++: vtkTypeBool HasObserver(const char *event)
+     |      
+     |      Allow people to add/remove/invoke observers (callbacks) to any
+     |      VTK object.  This is an implementation of the subject/observer
+     |      design pattern. An observer is added by specifying an event to
+     |      respond to and a vtkCommand to execute. It returns an unsigned
+     |      long tag which can be used later to remove the event or retrieve
+     |      the command. When events are invoked, the observers are called in
+     |      the order they were added. If a priority value is specified, then
+     |      the higher priority commands are called first. A command may set
+     |      an abort flag to stop processing of the event. (See vtkCommand.h
+     |      for more information.)
+     |  
+     |  InvokeEvent(...)
+     |      V.InvokeEvent(int, void) -> int
+     |      C++: int InvokeEvent(unsigned long event, void *callData)
+     |      V.InvokeEvent(string, void) -> int
+     |      C++: int InvokeEvent(const char *event, void *callData)
+     |      V.InvokeEvent(int) -> int
+     |      C++: int InvokeEvent(unsigned long event)
+     |      V.InvokeEvent(string) -> int
+     |      C++: int InvokeEvent(const char *event)
+     |      
+     |      This method invokes an event and return whether the event was
+     |      aborted or not. If the event was aborted, the return value is 1,
+     |      otherwise it is 0.
+     |  
+     |  Modified(...)
+     |      V.Modified()
+     |      C++: virtual void Modified()
+     |      
+     |      Update the modification time for this object. Many filters rely
+     |      on the modification time to determine if they need to recompute
+     |      their data. The modification time is a unique monotonically
+     |      increasing unsigned long integer.
+     |  
+     |  RemoveAllObservers(...)
+     |      V.RemoveAllObservers()
+     |      C++: void RemoveAllObservers()
+     |  
+     |  RemoveObserver(...)
+     |      V.RemoveObserver(vtkCommand)
+     |      C++: void RemoveObserver(vtkCommand *)
+     |      V.RemoveObserver(int)
+     |      C++: void RemoveObserver(unsigned long tag)
+     |      
+     |      Allow people to add/remove/invoke observers (callbacks) to any
+     |      VTK object.  This is an implementation of the subject/observer
+     |      design pattern. An observer is added by specifying an event to
+     |      respond to and a vtkCommand to execute. It returns an unsigned
+     |      long tag which can be used later to remove the event or retrieve
+     |      the command. When events are invoked, the observers are called in
+     |      the order they were added. If a priority value is specified, then
+     |      the higher priority commands are called first. A command may set
+     |      an abort flag to stop processing of the event. (See vtkCommand.h
+     |      for more information.)
+     |  
+     |  RemoveObservers(...)
+     |      V.RemoveObservers(int, vtkCommand)
+     |      C++: void RemoveObservers(unsigned long event, vtkCommand *)
+     |      V.RemoveObservers(string, vtkCommand)
+     |      C++: void RemoveObservers(const char *event, vtkCommand *)
+     |      V.RemoveObservers(int)
+     |      C++: void RemoveObservers(unsigned long event)
+     |      V.RemoveObservers(string)
+     |      C++: void RemoveObservers(const char *event)
+     |      
+     |      Allow people to add/remove/invoke observers (callbacks) to any
+     |      VTK object.  This is an implementation of the subject/observer
+     |      design pattern. An observer is added by specifying an event to
+     |      respond to and a vtkCommand to execute. It returns an unsigned
+     |      long tag which can be used later to remove the event or retrieve
+     |      the command. When events are invoked, the observers are called in
+     |      the order they were added. If a priority value is specified, then
+     |      the higher priority commands are called first. A command may set
+     |      an abort flag to stop processing of the event. (See vtkCommand.h
+     |      for more information.)
+     |  
+     |  SetDebug(...)
+     |      V.SetDebug(bool)
+     |      C++: void SetDebug(bool debugFlag)
+     |      
+     |      Set the value of the debug flag. A true value turns debugging on.
+     |  
+     |  SetGlobalWarningDisplay(...)
+     |      V.SetGlobalWarningDisplay(int)
+     |      C++: static void SetGlobalWarningDisplay(int val)
+     |      
+     |      This is a global flag that controls whether any debug, warning or
+     |      error messages are displayed.
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from vtkmodules.vtkCommonCore.vtkObjectBase:
+     |  
+     |  FastDelete(...)
+     |      V.FastDelete()
+     |      C++: virtual void FastDelete()
+     |      
+     |      Delete a reference to this object.  This version will not invoke
+     |      garbage collection and can potentially leak the object if it is
+     |      part of a reference loop.  Use this method only when it is known
+     |      that the object has another reference and would not be collected
+     |      if a full garbage collection check were done.
+     |  
+     |  GetAddressAsString(...)
+     |      V.GetAddressAsString(string) -> string
+     |      C++: const char *GetAddressAsString()
+     |      
+     |      Get address of C++ object in format 'Addr=%p' after casting to
+     |      the specified type.  You can get the same information from o.__this__.
+     |  
+     |  GetClassName(...)
+     |      V.GetClassName() -> string
+     |      C++: const char *GetClassName()
+     |      
+     |      Return the class name as a string.
+     |  
+     |  GetIsInMemkind(...)
+     |      V.GetIsInMemkind() -> bool
+     |      C++: bool GetIsInMemkind()
+     |      
+     |      A local state flag that remembers whether this object lives in
+     |      the normal or extended memory space.
+     |  
+     |  GetReferenceCount(...)
+     |      V.GetReferenceCount() -> int
+     |      C++: int GetReferenceCount()
+     |      
+     |      Return the current reference count of this object.
+     |  
+     |  GetUsingMemkind(...)
+     |      V.GetUsingMemkind() -> bool
+     |      C++: static bool GetUsingMemkind()
+     |      
+     |      A global state flag that controls whether vtkObjects are
+     |      constructed in the usual way (the default) or within the extended
+     |      memory space.
+     |  
+     |  InitializeObjectBase(...)
+     |      V.InitializeObjectBase()
+     |      C++: void InitializeObjectBase()
+     |  
+     |  Register(...)
+     |      V.Register(vtkObjectBase)
+     |      C++: virtual void Register(vtkObjectBase *o)
+     |      
+     |      Increase the reference count by 1.
+     |  
+     |  SetMemkindDirectory(...)
+     |      V.SetMemkindDirectory(string)
+     |      C++: static void SetMemkindDirectory(const char *directoryname)
+     |      
+     |      The name of a directory, ideally mounted -o dax, to memory map an
+     |      extended memory space within. This must be called before any
+     |      objects are constructed in the extended space. It can not be
+     |      changed once setup.
+     |  
+     |  SetReferenceCount(...)
+     |      V.SetReferenceCount(int)
+     |      C++: void SetReferenceCount(int)
+     |      
+     |      Sets the reference count. (This is very dangerous, use with
+     |      care.)
+     |  
+     |  UnRegister(...)
+     |      V.UnRegister(vtkObjectBase)
+     |      C++: virtual void UnRegister(vtkObjectBase *o)
+     |      
+     |      Decrease the reference count (release by another object). This
+     |      has the same effect as invoking Delete() (i.e., it reduces the
+     |      reference count by 1).
+
+FILE
+    /home/drishti/paraview/paraview_build/lib/python3.7/site-packages/vtkmodules/util/vtkAlgorithm.py
 
 
