@@ -1,6 +1,6 @@
 ## Table of Contents
 
-* [paraview.vtk (vtkmodules) ](#about-the-projec)
+* [paraview.vtk](#paraview.vtk)
     * [numpy_interface](#built-with)
       * [dataset_adapter](#packages-to-check-test-coverage)
       * [algorithms]
