@@ -12,19 +12,19 @@
       * [misc](#misc)
       * [numpy_support](#numpy_support)
       * [vtkAlgorithm](#vtkAlgorithm)
-      * [vtkConstants]
-      * [vtkImageExportToArray]
-      * [vtkImageExportFromArray]
-      * [vtkMethodParser]
-      * [vtkVariant]
-    * [gtk](#getting-started)
-      * [GtkGLExtVTKRenderWindow]
-      * [GtkGLExtVTKRenderWindowInteractor]
-      * [GtkVTKRenderWindow]
-      * [GtkVTKRenderWindowInteractor]
-    * [tk]
-    * [web]
-    * [wx]
+      * [vtkConstants](#vtkConstants)
+      * [vtkImageExportToArray](#vtkImageExportToArray)
+      * [vtkImageExportFromArray](#vtkImageExportFromArray)
+      * [vtkMethodParser](#vtkMethodParser)
+      * [vtkVariant](#vtkVariant)
+    * [gtk](#gtk)
+      * [GtkGLExtVTKRenderWindow](#GtkGLExtVTKRenderWindow)
+      * [GtkGLExtVTKRenderWindowInteractor](#GtkGLExtVTKRenderWindowInteractor)
+      * [GtkVTKRenderWindow](#GtkVTKRenderWindow)
+      * [GtkVTKRenderWindowInteractor](#GtkVTKRenderWindowInteractor)
+    * [tk](#tk)
+    * [web](#web)
+    * [wx](#wx)
 
 ## paraview vtk
 import paraview.vtk
