@@ -3,10 +3,10 @@
 
 * [paraview vtk](#paraview-vtk)
     * [numpy_interface](#numpy_interface)
-      * [dataset_adapter](#)
-      * [algorithms]
-      * [internal_algorithms]
-    * [util](#submitted-by)
+      * [dataset_adapter](#dataset_adapter)
+      * [algorithms](#algorithms)
+      * [internal_algorithms](#internal_algorithms)
+    * [util](#util)
       * [colors]
       * [keys]
       * [misc]
@@ -27,9 +27,10 @@
     * [wx]
 
 ## paraview vtk
+import paraview.vtk
 
 ### numpy_interface
-
+import paraview.vtk.numpy_interface
 #### dataset_adapter
 NAME
     paraview.vtk.numpy_interface.dataset_adapter
