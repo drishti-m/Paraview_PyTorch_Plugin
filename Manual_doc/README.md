@@ -1,8 +1,9 @@
+# Documentation
 ## Table of Contents
 
-* [paraview.vtk](#paraview.vtk)
-    * [numpy_interface](#built-with)
-      * [dataset_adapter](#packages-to-check-test-coverage)
+* [paraview vtk](#paraview-vtk)
+    * [numpy_interface](#numpy_interface)
+      * [dataset_adapter](#)
       * [algorithms]
       * [internal_algorithms]
     * [util](#submitted-by)
@@ -25,7 +26,7 @@
     * [web]
     * [wx]
 
-## paraview.vtk
+## paraview vtk
 
 ### numpy_interface
 
