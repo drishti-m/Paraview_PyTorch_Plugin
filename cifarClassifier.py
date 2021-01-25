@@ -22,10 +22,15 @@ class CifarClassifier(VTKPythonAlgorithmBase):
     def __init__(self):
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkTable")
+        x = 0
+        y = 0
+        z = 0
 
     def FillInputPortInformation(self, port, info):
+        print("port info set")
         if port == 0:
             info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkImageData")
+            print(info)
         # else:
         #     info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkTable")
         return 1
@@ -33,7 +38,8 @@ class CifarClassifier(VTKPythonAlgorithmBase):
     def RequestData(self, request, inInfoVec, outInfoVec):
         from vtkmodules.vtkCommonDataModel import vtkImageData, vtkTable, vtkDataSet, vtkPolyData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
-
+        print(request, "req")
+        print("self:", self.x, self.y, self.z)
         # PLUGIN different PART: pdi = vtkImagedata.GetData(inInfoVec[portNumber],0) instead of
         # prog filter: pdi = self.GetInput()
         pdi = vtkImageData.GetData(inInfoVec[0], 0)
@@ -111,6 +117,23 @@ class CifarClassifier(VTKPythonAlgorithmBase):
 
         print("Pretend work done!")
         return 1
+
+    @smproperty.xml("""
+        <DoubleVectorProperty name="Center"
+            number_of_elements="3"
+            default_values="0 0 0"
+            command="SetCenter">
+            <DoubleRangeDomain name="range" />
+            <Documentation>Set center of the superquadric</Documentation>
+        </DoubleVectorProperty>""")
+    def SetCenter(self, x, y, z):
+        #self._realAlgorithm.SetCenter(x, y, z)
+        # self.Modified()
+        # print(self)
+        print("center set", x, y, z)
+        self.x = x
+        self.y = y
+        self.z = z
 
 
 @smproxy.filter()
