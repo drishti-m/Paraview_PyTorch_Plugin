@@ -88,8 +88,6 @@ class ThresholdImage(VTKPythonAlgorithmBase):
 @smproxy.filter()
 @smproperty.input(name="InputRectilinear", port_index=0)
 @smdomain.datatype(dataTypes=["vtkRectilinearGrid"], composite_data_supported=True)
-@smproperty.output(name="OutputRectilinear", port_index=0)
-@smdomain.datatype(dataTypes=["vtkRectilinearGrid"], composite_data_supported=True)
 class ThresholdRectilinear(VTKPythonAlgorithmBase):
     threshold_cut = 0.5
 
@@ -127,6 +125,11 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
         seg_array = tf_array.astype(int)
         vtk_double_array = DA.numpyTovtkDataArray(
             seg_array, name="numpy_array")
+        for i in seg_array:
+            if i == 0 or i == 1:
+                good = 0
+            else:
+                print("middle:", i)
 
         output = vtkRectilinearGrid.GetData(outInfoVec, 0)
         output.SetDimensions(x, y, z)
@@ -134,7 +137,7 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
         output.SetYCoordinates(yCoords)
         output.SetZCoordinates(zCoords)
         output.GetPointData().SetScalars(vtk_double_array)
-        print("output:", output)
+        #print("output:", output)
         return 1
 
     @ smproperty.xml("""
