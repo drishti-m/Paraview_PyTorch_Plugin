@@ -3,3 +3,5 @@ Tutorial_Resources/
 Tutorial Data/
 Data.zip
 Data/
+*.pyc
+__pycache__/

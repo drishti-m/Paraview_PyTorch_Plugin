@@ -63,7 +63,7 @@ class ThresholdImage(VTKPythonAlgorithmBase):
         output.SetDimensions(32, 32*3, 1)
         output.GetPointData().SetScalars(vtk_float_array)
         print(output)
-        #dsa = output.GetRowData()
+        # dsa = output.GetRowData()
         # dsa.AddArray(predictions_vtk)
 
         print("Pretend work done!")
@@ -87,9 +87,10 @@ class ThresholdImage(VTKPythonAlgorithmBase):
 
 @smproxy.filter()
 @smproperty.input(name="InputRectilinear", port_index=0)
-@smdomain.datatype(dataTypes=["vtkRectilinearGrid"], composite_data_supported=True)
+@smdomain.datatype(dataTypes=["vtkRectilinearGrid", "vtkImageData"], composite_data_supported=True)
 class ThresholdRectilinear(VTKPythonAlgorithmBase):
     threshold_cut = 0.5
+    input_data_type = ""
 
     def __init__(self):
         self.threshold_cut = 0.5
@@ -97,47 +98,52 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkRectilinearGrid")
 
     def FillInputPortInformation(self, port, info):
-        #self = vtkPythonAlgorithm
+        # self = vtkPythonAlgorithm
         if port == 0:
-            info.Set(self.INPUT_REQUIRED_DATA_TYPE(), "vtkRectilinearGrid")
-            #info.Set(self.UPDATE_TIME_STEP(), 0)
-            print("self:", self)
+
+            # info.Set(self.INPUT_REQUIRED_DATA_TYPE(),
+            #          "vtkRectilinearGrid")
+            connection = info.Get(self.INPUT_CONNECTION())
+            self.input_data_type = self.GetInputDataObject(
+                port, connection)
+
         print("port info set")
         return 1
 
     def RequestData(self, request, inInfoVec, outInfoVec):
-        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
 
         '''inInfoVec = tuple
         inInfoVec[0] = vtkInformationVector
         outInfoVec = vtkInformationVector (not subscribtable)'''
 
-        pdi = vtkRectilinearGrid.GetData(inInfoVec[0], 0)
-        x, y, z = pdi.GetDimensions()
-        xCoords = pdi.GetXCoordinates()
-        yCoords = pdi.GetYCoordinates()
-        zCoords = pdi.GetZCoordinates()
-        no_arrays = pdi.GetPointData().GetNumberOfArrays()
-        float_array = pdi.GetPointData().GetAbstractArray(0)
-        numpy_array = ns.vtk_to_numpy(float_array)
-        tf_array = numpy_array > self.threshold_cut
-        seg_array = tf_array.astype(int)
-        vtk_double_array = DA.numpyTovtkDataArray(
-            seg_array, name="numpy_array")
-        for i in seg_array:
-            if i == 0 or i == 1:
-                good = 0
-            else:
-                print("middle:", i)
+        if self.input_data_type.GetClassName() == "vtkRectilinearGrid":
+            pdi = vtkRectilinearGrid.GetData(inInfoVec[0], 0)
+            x, y, z = pdi.GetDimensions()
+            xCoords = pdi.GetXCoordinates()
+            yCoords = pdi.GetYCoordinates()
+            zCoords = pdi.GetZCoordinates()
+            no_arrays = pdi.GetPointData().GetNumberOfArrays()
+            float_array = pdi.GetPointData().GetAbstractArray(0)
+            numpy_array = ns.vtk_to_numpy(float_array)
+            tf_array = numpy_array > self.threshold_cut
+            seg_array = tf_array.astype(int)
+            vtk_double_array = DA.numpyTovtkDataArray(
+                seg_array, name="numpy_array")
+            for i in seg_array:
+                if i == 0 or i == 1:
+                    good = 0
+                else:
+                    print("middle:", i)
 
-        output = vtkRectilinearGrid.GetData(outInfoVec, 0)
-        output.SetDimensions(x, y, z)
-        output.SetXCoordinates(xCoords)
-        output.SetYCoordinates(yCoords)
-        output.SetZCoordinates(zCoords)
-        output.GetPointData().SetScalars(vtk_double_array)
-        #print("output:", output)
+            output = vtkRectilinearGrid.GetData(outInfoVec, 0)
+            output.SetDimensions(x, y, z)
+            output.SetXCoordinates(xCoords)
+            output.SetYCoordinates(yCoords)
+            output.SetZCoordinates(zCoords)
+            output.GetPointData().SetScalars(vtk_double_array)
+
         return 1
 
     @ smproperty.xml("""
