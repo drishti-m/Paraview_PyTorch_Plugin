@@ -91,6 +91,8 @@ class ThresholdImage(VTKPythonAlgorithmBase):
 class ThresholdRectilinear(VTKPythonAlgorithmBase):
     threshold_cut = 0.5
     input_data_type = ""
+    t_port = 0
+    t_index = 0
 
     def __init__(self):
         self.threshold_cut = 0.5
@@ -103,9 +105,8 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
 
             # info.Set(self.INPUT_REQUIRED_DATA_TYPE(),
             #          "vtkRectilinearGrid")
-            connection = info.Get(self.INPUT_CONNECTION())
-            self.input_data_type = self.GetInputDataObject(
-                port, connection)
+            self.t_port = port
+            self.t_index = info.Get(self.INPUT_CONNECTION())  # connection
 
         print("port info set")
         return 1
@@ -117,34 +118,47 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
         '''inInfoVec = tuple
         inInfoVec[0] = vtkInformationVector
         outInfoVec = vtkInformationVector (not subscribtable)'''
-
-        if self.input_data_type.GetClassName() == "vtkRectilinearGrid":
-            pdi = vtkRectilinearGrid.GetData(inInfoVec[0], 0)
-            x, y, z = pdi.GetDimensions()
-            xCoords = pdi.GetXCoordinates()
-            yCoords = pdi.GetYCoordinates()
-            zCoords = pdi.GetZCoordinates()
-            no_arrays = pdi.GetPointData().GetNumberOfArrays()
-            float_array = pdi.GetPointData().GetAbstractArray(0)
-            numpy_array = ns.vtk_to_numpy(float_array)
-            tf_array = numpy_array > self.threshold_cut
-            seg_array = tf_array.astype(int)
-            vtk_double_array = DA.numpyTovtkDataArray(
-                seg_array, name="numpy_array")
-            for i in seg_array:
-                if i == 0 or i == 1:
-                    good = 0
-                else:
-                    print("middle:", i)
-
+        self.input_data_type = self.GetInputDataObject(
+            self.t_port, self.t_index).GetClassName()
+        if self.input_data_type == "vtkRectilinearGrid":
             output = vtkRectilinearGrid.GetData(outInfoVec, 0)
+            output, x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Process_RectlinearGrid(
+                inInfoVec, outInfoVec)
             output.SetDimensions(x, y, z)
             output.SetXCoordinates(xCoords)
             output.SetYCoordinates(yCoords)
             output.SetZCoordinates(zCoords)
             output.GetPointData().SetScalars(vtk_double_array)
+        elif self.input_data_type == "vtkImageData":
+            output = vtkRectilinearGrid.GetData(outInfoVec, 0)
+            output.SetDimensions(1, 3, 1)
 
         return 1
+
+    def Process_RectlinearGrid(self, inInfoVec, outInfoVec):
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
+        from vtkmodules.vtkCommonCore import VTK_DOUBLE
+        pdi = vtkRectilinearGrid.GetData(inInfoVec[0], 0)
+
+        x, y, z = pdi.GetDimensions()
+        xCoords = pdi.GetXCoordinates()
+        yCoords = pdi.GetYCoordinates()
+        zCoords = pdi.GetZCoordinates()
+        no_arrays = pdi.GetPointData().GetNumberOfArrays()
+        float_array = pdi.GetPointData().GetAbstractArray(0)
+        numpy_array = ns.vtk_to_numpy(float_array)
+        tf_array = numpy_array > self.threshold_cut
+        seg_array = tf_array.astype(int)
+        vtk_double_array = DA.numpyTovtkDataArray(
+            seg_array, name="numpy_array")
+        for i in seg_array:
+            if i == 0 or i == 1:
+                good = 0
+            else:
+                print("middle:", i)
+        output = vtkRectilinearGrid.GetData(outInfoVec, 0)
+
+        return output, x, y, z, xCoords, yCoords, zCoords, vtk_double_array
 
     @ smproperty.xml("""
         <DoubleVectorProperty name="Threshold Value"
