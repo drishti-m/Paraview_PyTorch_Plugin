@@ -121,19 +121,43 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
         self.input_data_type = self.GetInputDataObject(
             self.t_port, self.t_index).GetClassName()
         if self.input_data_type == "vtkRectilinearGrid":
-            output = vtkRectilinearGrid.GetData(outInfoVec, 0)
-            output, x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Process_RectlinearGrid(
+            x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Process_RectlinearGrid(
                 inInfoVec, outInfoVec)
-            output.SetDimensions(x, y, z)
-            output.SetXCoordinates(xCoords)
-            output.SetYCoordinates(yCoords)
-            output.SetZCoordinates(zCoords)
-            output.GetPointData().SetScalars(vtk_double_array)
         elif self.input_data_type == "vtkImageData":
-            output = vtkRectilinearGrid.GetData(outInfoVec, 0)
-            output.SetDimensions(1, 3, 1)
+            x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Convert_Img_To_Rectilinear(
+                inInfoVec)
+        output = vtkRectilinearGrid.GetData(outInfoVec, 0)
+        output.SetDimensions(x, y, z)
+        output.SetXCoordinates(xCoords)
+        output.SetYCoordinates(yCoords)
+        output.SetZCoordinates(zCoords)
+        output.GetPointData().SetScalars(vtk_double_array)
 
         return 1
+
+    def Convert_Img_To_Rectilinear(self, inInfoVec):
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
+        from vtkmodules.vtkCommonCore import VTK_DOUBLE
+        pdi = vtkImageData.GetData(inInfoVec[0], 0)
+        x, y, z = pdi.GetDimensions()
+        xCoords = np.arange(0, x, 1)
+        yCoords = np.arange(0, y, 1)
+        zCoords = np.arange(0, z, 1)
+        xCoords = DA.numpyTovtkDataArray(
+            xCoords, name="x-coordinates")
+        yCoords = DA.numpyTovtkDataArray(
+            yCoords, name="y-coordinates")
+        zCoords = DA.numpyTovtkDataArray(
+            zCoords, name="z-coordinates")
+
+        no_arrays = pdi.GetPointData().GetNumberOfArrays()
+        vtk_double_array = pdi.GetPointData().GetAbstractArray(0)
+        numpy_array = ns.vtk_to_numpy(vtk_double_array)
+        tf_array = numpy_array > self.threshold_cut
+        seg_array = tf_array.astype(int)
+        vtk_double_array = DA.numpyTovtkDataArray(
+            seg_array, name="threshold_pixels")
+        return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
 
     def Process_RectlinearGrid(self, inInfoVec, outInfoVec):
         from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
@@ -158,7 +182,7 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
                 print("middle:", i)
         output = vtkRectilinearGrid.GetData(outInfoVec, 0)
 
-        return output, x, y, z, xCoords, yCoords, zCoords, vtk_double_array
+        return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
 
     @ smproperty.xml("""
         <DoubleVectorProperty name="Threshold Value"
