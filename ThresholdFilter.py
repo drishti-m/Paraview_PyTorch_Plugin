@@ -93,6 +93,7 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
     input_data_type = ""
     t_port = 0
     t_index = 0
+    path = ""
 
     def __init__(self):
         self.threshold_cut = 0.5
@@ -195,4 +196,153 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
     def SetThresholdR(self, x):
         print("Threshold set", x)
         self.threshold_cut = x
+        self.Modified()
+
+    @ smproperty.stringvector(name="path")
+    def SetPathR(self, x):
+        print("Threshold set", x)
+        self.path = x
+        self.Modified()
+
+
+@smproxy.filter()
+@smproperty.input(name="InputRectilinear", port_index=0)
+@smdomain.datatype(dataTypes=["vtkRectilinearGrid", "vtkImageData"], composite_data_supported=True)
+class ThresholdML(VTKPythonAlgorithmBase):
+    threshold_cut = 0.5
+    input_data_type = ""
+    t_port = 0
+    t_index = 0
+    model_path = ""
+    class_path = ""
+
+    def __init__(self):
+        self.threshold_cut = 0.5
+        VTKPythonAlgorithmBase.__init__(
+            self, nInputPorts=1, nOutputPorts=1, outputType="vtkRectilinearGrid")
+
+    def FillInputPortInformation(self, port, info):
+        # self = vtkPythonAlgorithm
+        if port == 0:
+
+            # info.Set(self.INPUT_REQUIRED_DATA_TYPE(),
+            #          "vtkRectilinearGrid")
+            self.t_port = port
+            self.t_index = info.Get(self.INPUT_CONNECTION())  # connection
+
+        print("port info set")
+        return 1
+
+    def RequestData(self, request, inInfoVec, outInfoVec):
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
+        from vtkmodules.vtkCommonCore import VTK_DOUBLE
+
+        '''inInfoVec = tuple
+        inInfoVec[0] = vtkInformationVector
+        outInfoVec = vtkInformationVector (not subscribtable)'''
+        self.input_data_type = self.GetInputDataObject(
+            self.t_port, self.t_index).GetClassName()
+        if self.input_data_type == "vtkRectilinearGrid":
+            x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Process_RectlinearGrid(
+                inInfoVec, outInfoVec)
+        elif self.input_data_type == "vtkImageData":
+            x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Convert_Img_To_Rectilinear(
+                inInfoVec)
+        output = vtkRectilinearGrid.GetData(outInfoVec, 0)
+        output.SetDimensions(x, y, z)
+        output.SetXCoordinates(xCoords)
+        output.SetYCoordinates(yCoords)
+        output.SetZCoordinates(zCoords)
+        output.GetPointData().SetScalars(vtk_double_array)
+
+        return 1
+
+    def Convert_Img_To_Rectilinear(self, inInfoVec):
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
+        from vtkmodules.vtkCommonCore import VTK_DOUBLE
+        pdi = vtkImageData.GetData(inInfoVec[0], 0)
+        x, y, z = pdi.GetDimensions()
+        xCoords = np.arange(0, x, 1)
+        yCoords = np.arange(0, y, 1)
+        zCoords = np.arange(0, z, 1)
+        xCoords = DA.numpyTovtkDataArray(
+            xCoords, name="x-coordinates")
+        yCoords = DA.numpyTovtkDataArray(
+            yCoords, name="y-coordinates")
+        zCoords = DA.numpyTovtkDataArray(
+            zCoords, name="z-coordinates")
+
+        no_arrays = pdi.GetPointData().GetNumberOfArrays()
+        vtk_double_array = pdi.GetPointData().GetAbstractArray(0)
+        numpy_array = ns.vtk_to_numpy(vtk_double_array)
+
+        torch_np_array = self.trained_threshold(numpy_array)
+        torch_np_array.reshape(numpy_array.shape)
+        vtk_double_array = DA.numpyTovtkDataArray(
+            torch_np_array, name="threshold_pixels")
+        return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
+
+    def Process_RectlinearGrid(self, inInfoVec, outInfoVec):
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
+        from vtkmodules.vtkCommonCore import VTK_DOUBLE
+        pdi = vtkRectilinearGrid.GetData(inInfoVec[0], 0)
+
+        x, y, z = pdi.GetDimensions()
+        xCoords = pdi.GetXCoordinates()
+        yCoords = pdi.GetYCoordinates()
+        zCoords = pdi.GetZCoordinates()
+        no_arrays = pdi.GetPointData().GetNumberOfArrays()
+        float_array = pdi.GetPointData().GetAbstractArray(0)
+        numpy_array = ns.vtk_to_numpy(float_array)
+
+        torch_np_array = self.trained_threshold(numpy_array)
+        torch_np_array.reshape(numpy_array.shape)
+        vtk_double_array = DA.numpyTovtkDataArray(
+            torch_np_array, name="threshold_pixels")
+        # tf_array = numpy_array > self.threshold_cut
+        # seg_array = tf_array.astype(int)
+        # vtk_double_array = DA.numpyTovtkDataArray(
+        #     seg_array, name="numpy_array")
+
+        output = vtkRectilinearGrid.GetData(outInfoVec, 0)
+
+        return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
+
+    def trained_threshold(self, numpy_array):
+        from neural_net import Net
+
+        net = Net()
+        net.load_state_dict(torch.load(self.model_path))
+        numpy_array = numpy_array.reshape((1, -1))[0]
+        print(numpy_array.shape)
+        torch_array = torch.from_numpy(numpy_array).to(torch.float)
+        torch_array = torch.unsqueeze(torch_array, 1)
+        print(torch_array.shape)
+        outputs = net.forward(torch_array)
+        # print(outputs)
+        return outputs.detach().numpy()
+
+    @ smproperty.xml("""
+        <DoubleVectorProperty name="Threshold Value"
+            number_of_elements="1"
+            default_values="0.5"
+            command="SetThresholdR">
+            <DoubleRangeDomain name="range" />
+            <Documentation>Set threshold pixel value to segment(binary)</Documentation>
+        </DoubleVectorProperty>""")
+    def SetThresholdR(self, x):
+        print("Threshold set", x)
+        self.threshold_cut = x
+        self.Modified()
+
+    @ smproperty.stringvector(name="path")
+    def SetModelPathR(self, x):
+        print("Model path: ", x)
+        self.model_path = x
+        self.Modified()
+
+    @ smproperty.stringvector(name="classDefinition")
+    def SetClassPath(self, x):
+        print("Class path: ", x)
+        self.class_path = x
         self.Modified()
