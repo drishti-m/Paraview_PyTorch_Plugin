@@ -209,7 +209,6 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
 @smproperty.input(name="InputRectilinear", port_index=0)
 @smdomain.datatype(dataTypes=["vtkRectilinearGrid", "vtkImageData"], composite_data_supported=True)
 class ThresholdML(VTKPythonAlgorithmBase):
-    threshold_cut = 0.5
     input_data_type = ""
     t_port = 0
     t_index = 0
@@ -217,7 +216,6 @@ class ThresholdML(VTKPythonAlgorithmBase):
     class_path = ""
 
     def __init__(self):
-        self.threshold_cut = 0.5
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkRectilinearGrid")
 
@@ -237,9 +235,6 @@ class ThresholdML(VTKPythonAlgorithmBase):
         from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
 
-        '''inInfoVec = tuple
-        inInfoVec[0] = vtkInformationVector
-        outInfoVec = vtkInformationVector (not subscribtable)'''
         self.input_data_type = self.GetInputDataObject(
             self.t_port, self.t_index).GetClassName()
         if self.input_data_type == "vtkRectilinearGrid":
@@ -309,9 +304,13 @@ class ThresholdML(VTKPythonAlgorithmBase):
         return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
 
     def trained_threshold(self, numpy_array):
-        from neural_net import Net
+        from importlib import import_module
 
-        net = Net()
+        module_name = self.get_trained_class_module_name()
+        #module_name = "neural_net"
+        module = import_module(module_name)
+
+        net = module.Net()
         net.load_state_dict(torch.load(self.model_path))
         numpy_array = numpy_array.reshape((1, -1))[0]
         print(numpy_array.shape)
@@ -322,26 +321,25 @@ class ThresholdML(VTKPythonAlgorithmBase):
         # print(outputs)
         return outputs.detach().numpy()
 
-    @ smproperty.xml("""
-        <DoubleVectorProperty name="Threshold Value"
-            number_of_elements="1"
-            default_values="0.5"
-            command="SetThresholdR">
-            <DoubleRangeDomain name="range" />
-            <Documentation>Set threshold pixel value to segment(binary)</Documentation>
-        </DoubleVectorProperty>""")
-    def SetThresholdR(self, x):
-        print("Threshold set", x)
-        self.threshold_cut = x
-        self.Modified()
+    def get_trained_class_module_name(self):
+        import sys
+        import os.path
+        from pathlib import Path
+        from importlib import import_module
 
-    @ smproperty.stringvector(name="path")
+        abs_path_class = os.path.abspath(self.class_path)
+        class_dir = os.path.dirname(abs_path_class)
+        sys.path.append(class_dir)
+        module_name = Path(self.class_path).stem
+        return module_name
+
+    @ smproperty.stringvector(name="Trained Model Path")
     def SetModelPathR(self, x):
         print("Model path: ", x)
         self.model_path = x
         self.Modified()
 
-    @ smproperty.stringvector(name="classDefinition")
+    @ smproperty.stringvector(name="Model's Class Path")
     def SetClassPath(self, x):
         print("Class path: ", x)
         self.class_path = x
