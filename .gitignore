@@ -2,6 +2,7 @@ state-of-the-art/
 Tutorial_Resources/
 Sample_Data/
 Data.zip
+Sample_Data.zip
 Data/
 *.pyc
 __pycache__/
