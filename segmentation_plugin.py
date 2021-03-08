@@ -49,62 +49,112 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         #         inInfoVec, outInfoVec)
 
         if self.input_data_type == "vtkImageData":
-            rgb, x, y, z = self.Segment_Image(
+            rgb_output_vtk, x, y, z = self.Segment_Image(
                 inInfoVec)
 
         output = vtkImageData.GetData(outInfoVec, 0)
         output.SetDimensions(x, y, z)
-        vtk_output = DA.numpyTovtkDataArray(rgb, name="numpy_array")
-        print(vtk_output)
-        output.GetPointData().SetScalars(vtk_output)
-
+        output.GetPointData().SetScalars(rgb_output_vtk)
         return 1
 
+    def convert_vtk_to_numpy(self, pixels_vtk_array, x, y):
+        """
+        Adjusts proper order for vtk image array to convert into 
+        equivalent numpy array.
+
+        Args:
+        pixels_vtk_array: vtk array 
+        x: x-dimension of vtkImageData containing pixels_vtk_array
+        y: y-dimension of vtkImageData containing pixels_vtk_array
+
+        Returns:
+        numpy array of shape (y,x,3) representing RGB values
+
+        """
+        pixels_np_array = ns.vtk_to_numpy(pixels_vtk_array)
+        # print(pixels_np_array)
+
+        # x, y reversed between vtk <-> numpy array
+        pixels_np_array = pixels_np_array.reshape((y, x, 3))
+        pixels_np_array = np.flip(pixels_np_array)
+        return pixels_np_array
+
+    def convert_numpy_to_vtk(self, rgb_array):
+        """
+        Adjusts proper order for numpy array to convert into 
+        equivalent vtk array.
+
+        Args:
+        rgb_array: numpy array of shape (x,y,3)
+
+        Returns:
+        vtk array of shape (x*y, 3)
+
+        """
+        r_x, r_y, r_z = rgb_array.shape
+        rgb_array = np.flip(rgb_array)
+        rgb_array = rgb_array.reshape((r_x*r_y, r_z))
+        vtk_output = DA.numpyTovtkDataArray(rgb_array, name="segmented_pixels")
+        # x, y reversed between vtk <-> numpy array
+        return vtk_output, r_y, r_x, r_z
+
     def Segment_Image(self, inInfoVec):
+        """
+        Performs pixel segmentation according to model loaded.
+
+        Args:
+        inInfovec: vtk Information vector containing input information from pipeline
+
+        Returns:
+        rgb_vtk: Segemnted pixel values array as suitable vtk array
+        r_x: x-dimensions for resulting vtk image
+        r_y: y-dimensions for resulting vtk image
+        r_z: z-dimensions for resulting vtk image
+
+        """
         from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
         pdi = vtkImageData.GetData(inInfoVec[0], 0)
+
         x, y, z = pdi.GetDimensions()
-        print(x, y, z)
-        # print(pdi.GetCellPoint(x, y))
-        no_arrays = pdi.GetPointData().GetNumberOfArrays()
-        float_array = pdi.GetPointData().GetAbstractArray(0)
-        # print(self.GetPointData())
-        # help(self)
-        print(float_array)
-        numpy_array = ns.vtk_to_numpy(float_array)
-        print(numpy_array)
+        print("Shape of input vtk Image: ", x, y, z)
+        #no_arrays = pdi.GetPointData().GetNumberOfArrays()
+        pixels_vtk_array = pdi.GetPointData().GetAbstractArray(0)
+        # print(pixels_vtk_array)
 
-        numpy_array = numpy_array.reshape((y, x, z*3))  # , order="F")
-        numpy_array = np.flip(numpy_array)
-        print(numpy_array.shape)
-        # print(numpy_array[0])
+        pixels_np_array = self.convert_vtk_to_numpy(pixels_vtk_array, x, y)
+        print("Converted vtk array to suitable numpy representation with shape: ",
+              pixels_np_array.shape)
 
+        print("Loading model at path: ", self.model_path)
         fcn = torch.load(self.model_path)
-
-        # numpy_array = numpy_array.resize(numpy_array, (256, 256, 3))
-
+        print("Preprocessing image for segmentation..")
         trf = T.Compose([T.ToPILImage(), T.Resize(256),
                          T.ToTensor(), T.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-
-        inp = trf(numpy_array).unsqueeze(0)
-        # print(inp)
+        inp = trf(pixels_np_array).unsqueeze(0)
         out = fcn(inp)['out']
-        print('Calling model')
+
+        print('\nResults ready. Check "segmented_pixels" coloring for results.')
         om = torch.argmax(out.squeeze(), dim=0).detach().cpu().numpy()
         rgb = self.decode_segmap(om)
-        print(rgb.shape)
-        r_x, r_y, r_z = rgb.shape
-        # rgb.reshape((r_y,))
-        rgb = np.flip(rgb)
-        rgb = rgb.reshape((r_x*r_y, 3))  # , order="F")
-        # print(rgb.shape)
 
-        return rgb, r_y, r_x, z
+        rgb_vtk, r_x, r_y, r_z = self.convert_numpy_to_vtk(rgb)
+
+        return rgb_vtk, r_x, r_y, r_z
 
     def decode_segmap(self, image, nc=21):
+        """
+        Decodes pixel colors for resulting values from semantic segmentation.
 
+        Args: 
+        image: image array containing label ids of segmentation
+        nc = number of labels + 1
+
+        Returns:
+        rgb: rgb value of decoded pixels
+
+        """
         label_colors = np.array([(0, 0, 0),  # 0=background
                                  # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
                                  (128, 0, 0), (0, 128, 0), (128, 128,
@@ -117,19 +167,6 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
                                                                128), (64, 128, 128), (192, 128, 128),
                                  # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
                                  (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0), (0, 64, 128)])
-
-        # label_colors = np.array([(0, 0, 0),  # 0=background
-        #                          # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
-        #                          (10, 10, 10), (100, 100, 100), (120, 120,
-        #                                                          120), (50, 50, 50), (150, 150, 150),
-        #                          # 6=bus, 7=car, 8=cat, 9=chair, 10=cow
-        #                          (170, 170, 170), (128, 128, 128), (64,
-        #                                                              64, 64), (192, 192, 192), (140, 140, 140),
-        #                          # 11=dining table, 12=dog, 13=horse, 14=motorbike, 15=person
-        #                          (160, 160, 160), (30, 30, 30), (250, 250,
-        #                                                          250), (180, 180, 180), (200, 200, 200),
-        #                          # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
-        #                          (70, 70, 70), (20, 20, 20), (175, 175, 175), (135, 135, 135), (45, 45, 45)])
 
         r = np.zeros_like(image).astype(np.uint8)
         g = np.zeros_like(image).astype(np.uint8)
@@ -144,7 +181,7 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         rgb = np.stack([r, g, b], axis=2)
         return rgb
 
-    @ smproperty.stringvector(name="Trained Model Path")
+    @smproperty.stringvector(name="Trained Model Path")
     def SetModelPathR(self, x):
         print("Model path: ", x)
         self.model_path = x
