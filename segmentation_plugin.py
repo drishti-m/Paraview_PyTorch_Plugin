@@ -97,10 +97,11 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         print(rgb.shape)
         r_x, r_y, r_z = rgb.shape
         # rgb.reshape((r_y,))
-        rgb = rgb.reshape((r_x*r_y, 3), order="F")
+        rgb = np.flip(rgb)
+        rgb = rgb.reshape((r_x*r_y, 3))  # , order="F")
         # print(rgb.shape)
 
-        return rgb, r_x, r_y, r_z
+        return rgb, r_y, r_x, r_z
 
     def decode_segmap(self, image, nc=21):
 
