@@ -53,8 +53,9 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
                 inInfoVec)
 
         output = vtkImageData.GetData(outInfoVec, 0)
-        output.SetDimensions(x, y, z)
+        output.SetDimensions(x, y, 1)  # x, y, z)
         vtk_output = DA.numpyTovtkDataArray(rgb, name="numpy_array")
+        print(vtk_output)
         output.GetPointData().SetScalars(vtk_output)
 
         return 1
@@ -65,29 +66,41 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         pdi = vtkImageData.GetData(inInfoVec[0], 0)
         x, y, z = pdi.GetDimensions()
         print(x, y, z)
-        #print(pdi.GetCellPoint(x, y))
+        # print(pdi.GetCellPoint(x, y))
         no_arrays = pdi.GetPointData().GetNumberOfArrays()
         float_array = pdi.GetPointData().GetAbstractArray(0)
         # print(self.GetPointData())
         # help(self)
         print(float_array)
         numpy_array = ns.vtk_to_numpy(float_array)
+        print(numpy_array)
+
+        numpy_array = numpy_array.reshape((y, x, z*3))  # , order="F")
+        numpy_array = np.flip(numpy_array)
         print(numpy_array.shape)
-        numpy_array = numpy_array.reshape((x, y, z*3), order="F")
+        # print(numpy_array[0])
+
         fcn = torch.load(self.model_path)
 
-        trf = T.Compose([T.ToTensor(), T.Normalize(
+        # numpy_array = numpy_array.resize(numpy_array, (256, 256, 3))
+
+        trf = T.Compose([T.ToPILImage(), T.Resize(256),
+                         T.ToTensor(), T.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+
         inp = trf(numpy_array).unsqueeze(0)
         # print(inp)
         out = fcn(inp)['out']
         print('Calling model')
         om = torch.argmax(out.squeeze(), dim=0).detach().cpu().numpy()
         rgb = self.decode_segmap(om)
-        rgb = rgb.reshape((x*y, 3), order="F")
         print(rgb.shape)
+        r_x, r_y, r_z = rgb.shape
+        # rgb.reshape((r_y,))
+        rgb = rgb.reshape((r_x*r_y, 3), order="F")
+        # print(rgb.shape)
 
-        return rgb, x, y, z
+        return rgb, r_x, r_y, r_z
 
     def decode_segmap(self, image, nc=21):
 
@@ -103,6 +116,19 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
                                                                128), (64, 128, 128), (192, 128, 128),
                                  # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
                                  (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0), (0, 64, 128)])
+
+        # label_colors = np.array([(0, 0, 0),  # 0=background
+        #                          # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
+        #                          (10, 10, 10), (100, 100, 100), (120, 120,
+        #                                                          120), (50, 50, 50), (150, 150, 150),
+        #                          # 6=bus, 7=car, 8=cat, 9=chair, 10=cow
+        #                          (170, 170, 170), (128, 128, 128), (64,
+        #                                                              64, 64), (192, 192, 192), (140, 140, 140),
+        #                          # 11=dining table, 12=dog, 13=horse, 14=motorbike, 15=person
+        #                          (160, 160, 160), (30, 30, 30), (250, 250,
+        #                                                          250), (180, 180, 180), (200, 200, 200),
+        #                          # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
+        #                          (70, 70, 70), (20, 20, 20), (175, 175, 175), (135, 135, 135), (45, 45, 45)])
 
         r = np.zeros_like(image).astype(np.uint8)
         g = np.zeros_like(image).astype(np.uint8)
