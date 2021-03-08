@@ -49,11 +49,11 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         #         inInfoVec, outInfoVec)
 
         if self.input_data_type == "vtkImageData":
-            rgb, x, y, z = self.Segment_Image(
+            rgb, x, y = self.Segment_Image(
                 inInfoVec)
 
         output = vtkImageData.GetData(outInfoVec, 0)
-        output.SetDimensions(x, y, 1)  # x, y, z)
+        output.SetDimensions(x, y, z)
         vtk_output = DA.numpyTovtkDataArray(rgb, name="numpy_array")
         print(vtk_output)
         output.GetPointData().SetScalars(vtk_output)
@@ -101,7 +101,7 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         rgb = rgb.reshape((r_x*r_y, 3))  # , order="F")
         # print(rgb.shape)
 
-        return rgb, r_y, r_x, r_z
+        return rgb, r_y, r_x
 
     def decode_segmap(self, image, nc=21):
 
