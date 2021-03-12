@@ -55,6 +55,7 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         output = vtkImageData.GetData(outInfoVec, 0)
         output.SetDimensions(x, y, z)
         output.GetPointData().SetScalars(rgb_output_vtk)
+        print("Output dimensions: ", y, x)
         return 1
 
     def convert_vtk_to_numpy(self, pixels_vtk_array, x, y):
@@ -91,7 +92,9 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         vtk array of shape (x*y, 3)
 
         """
-        r_x, r_y, r_z = rgb_array.shape
+        #r_x, r_y, r_z = rgb_array.shape
+        r_x, r_y = rgb_array.shape
+        r_z = 1
         rgb_array = np.flip(rgb_array)
         rgb_array = rgb_array.reshape((r_x*r_y, r_z))
         vtk_output = DA.numpyTovtkDataArray(rgb_array, name="segmented_pixels")
@@ -155,30 +158,46 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         rgb: rgb value of decoded pixels
 
         """
-        label_colors = np.array([(0, 0, 0),  # 0=background
-                                 # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
-                                 (128, 0, 0), (0, 128, 0), (128, 128,
-                                                            0), (0, 0, 128), (128, 0, 128),
-                                 # 6=bus, 7=car, 8=cat, 9=chair, 10=cow
-                                 (0, 128, 128), (128, 128, 128), (64,
-                                                                  0, 0), (192, 0, 0), (64, 128, 0),
-                                 # 11=dining table, 12=dog, 13=horse, 14=motorbike, 15=person
-                                 (192, 128, 0), (64, 0, 128), (192, 0,
-                                                               128), (64, 128, 128), (192, 128, 128),
-                                 # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
-                                 (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0), (0, 64, 128)])
-
+        # label_colors = np.array([(0, 0, 0),  # 0=background
+        #                          # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
+        #                          (128, 0, 0), (0, 128, 0), (128, 128,
+        #                                                     0), (0, 0, 128), (128, 0, 128),
+        #                          # 6=bus, 7=car, 8=cat, 9=chair, 10=cow
+        #                          (0, 128, 128), (128, 128, 128), (64,
+        #                                                           0, 0), (192, 0, 0), (64, 128, 0),
+        #                          # 11=dining table, 12=dog, 13=horse, 14=motorbike, 15=person
+        #                          (192, 128, 0), (64, 0, 128), (192, 0,
+        #                                                        128), (64, 128, 128), (192, 128, 128),
+        #                          # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
+        #                          (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0), (0, 64, 128)])
+        # label_colors = np.array([(0, 0, 0),  # (24, 24, 24),  # 0=background
+        #                          # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
+        #                          (12, 12, 12), (148, 148, 148), (48, 48,
+        #                                                          48), (60, 60, 60), (72, 72, 72),
+        #                          # 6=bus, 7=car, 8=cat, 9=chair, 10=cow
+        #                          (84, 84, 84), (96, 96, 96), (108, 108,
+        #                                                       108), (120, 120, 120), (132, 132, 132),
+        #                          # 11=dining table, 12=dog, 13=horse, 14=motorbike, 15=person
+        #                          (144, 144, 144), (156, 156, 156), (168, 168,
+        #                                                             168), (180, 180, 180), (192, 192, 192),
+        #                          # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
+        #                          (204, 204, 204), (216, 216, 216), (228, 228, 228), (240, 240, 240), (252, 252, 252)])
+        # label_colors = np.array([[0], [12], [148], [48], [60], [72], [84], [96], [108],
+        #                          [120], [132], [144], [156], [168], [180], [192], [204], [216], [228], [240], [252]])
+        label_colors = np.array([0, 185, 139, 48, 60, 72, 84, 96, 108,
+                                 120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252])
         r = np.zeros_like(image).astype(np.uint8)
         g = np.zeros_like(image).astype(np.uint8)
         b = np.zeros_like(image).astype(np.uint8)
 
         for l in range(0, nc):
             idx = image == l
-            r[idx] = label_colors[l, 0]
-            g[idx] = label_colors[l, 1]
-            b[idx] = label_colors[l, 2]
+            r[idx] = label_colors[l]  # label_colors[l, 0]
+            #g[idx] = label_colors[l, 1]
+            #b[idx] = label_colors[l, 2]
 
-        rgb = np.stack([r, g, b], axis=2)
+        #rgb = np.stack([r, g, b], axis=2)
+        rgb = np.stack(r, axis=0)
         return rgb
 
     @smproperty.stringvector(name="Trained Model Path")
