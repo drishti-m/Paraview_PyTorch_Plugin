@@ -77,7 +77,7 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
 
         # x, y reversed between vtk <-> numpy array
         pixels_np_array = pixels_np_array.reshape((y, x, 3))
-        pixels_np_array = np.flip(pixels_np_array)
+        pixels_np_array = np.flip(pixels_np_array, axis=0)
         return pixels_np_array
 
     def convert_numpy_to_vtk(self, rgb_array):
@@ -95,7 +95,7 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         #r_x, r_y, r_z = rgb_array.shape
         r_x, r_y = rgb_array.shape
         r_z = 1
-        rgb_array = np.flip(rgb_array)
+        rgb_array = np.flip(rgb_array, axis=0)
         rgb_array = rgb_array.reshape((r_x*r_y, r_z))
         vtk_output = DA.numpyTovtkDataArray(rgb_array, name="segmented_pixels")
         # x, y reversed between vtk <-> numpy array
