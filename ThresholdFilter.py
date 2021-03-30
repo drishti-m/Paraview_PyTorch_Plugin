@@ -317,7 +317,8 @@ class ThresholdML(VTKPythonAlgorithmBase):
         torch_array = torch.from_numpy(numpy_array).to(torch.float)
         torch_array = torch.unsqueeze(torch_array, 1)
         print(torch_array.shape)
-        outputs = net.forward(torch_array)
+        # net.forward(torch_array)
+        outputs = net.predict(torch_array)
         # print(outputs)
         return outputs.detach().numpy()
 

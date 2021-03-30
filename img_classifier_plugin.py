@@ -1,12 +1,8 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
-import torch.nn as nn
-import torch.nn.functional as F
 import os
-from vtk.util import numpy_support
 from paraview.vtk.util import numpy_support as ns
-import matplotlib.pyplot as plt
 from paraview import simple
 from paraview.util.vtkAlgorithm import *
 import vtk

@@ -6,3 +6,4 @@ Sample_Data.zip
 Data/
 *.pyc
 __pycache__/
+runs/
