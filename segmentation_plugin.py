@@ -89,7 +89,7 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         rgb_array: numpy array of shape (x,y,3)
 
         Returns:
-        vtk array of shape (x*y, 3)
+        vtk array of shape (x*y, 1)
 
         """
         #r_x, r_y, r_z = rgb_array.shape

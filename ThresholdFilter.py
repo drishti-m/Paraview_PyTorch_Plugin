@@ -248,6 +248,7 @@ class ThresholdML(VTKPythonAlgorithmBase):
         output.SetXCoordinates(xCoords)
         output.SetYCoordinates(yCoords)
         output.SetZCoordinates(zCoords)
+
         output.GetPointData().SetScalars(vtk_double_array)
 
         return 1
@@ -272,7 +273,7 @@ class ThresholdML(VTKPythonAlgorithmBase):
         numpy_array = ns.vtk_to_numpy(vtk_double_array)
 
         torch_np_array = self.trained_threshold(numpy_array)
-        torch_np_array.reshape(numpy_array.shape)
+
         vtk_double_array = DA.numpyTovtkDataArray(
             torch_np_array, name="threshold_pixels")
         return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
@@ -288,22 +289,29 @@ class ThresholdML(VTKPythonAlgorithmBase):
         zCoords = pdi.GetZCoordinates()
         no_arrays = pdi.GetPointData().GetNumberOfArrays()
         float_array = pdi.GetPointData().GetAbstractArray(0)
+        no_components = float_array.GetNumberOfComponents()
         numpy_array = ns.vtk_to_numpy(float_array)
 
-        torch_np_array = self.trained_threshold(numpy_array)
-        torch_np_array.reshape(numpy_array.shape)
+        if no_components < 2:
+            numpy_array = numpy_array.reshape((1, -1))[0]
+
+        torch_np_array = self.trained_threshold(numpy_array, no_components)
+
+        print("after predct", torch_np_array.shape,
+              "to convert", numpy_array.shape)
+
+        print(torch_np_array.shape)
+
         vtk_double_array = DA.numpyTovtkDataArray(
             torch_np_array, name="threshold_pixels")
-        # tf_array = numpy_array > self.threshold_cut
-        # seg_array = tf_array.astype(int)
-        # vtk_double_array = DA.numpyTovtkDataArray(
-        #     seg_array, name="numpy_array")
+        print(vtk_double_array)
+        # vtk_double_array.SetNumberOfComponents(
+        #     float_array.GetNumberOfComponents())
 
-        output = vtkRectilinearGrid.GetData(outInfoVec, 0)
-
+        print(vtk_double_array)
         return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
 
-    def trained_threshold(self, numpy_array):
+    def trained_threshold(self, numpy_array, no_components):
         from importlib import import_module
 
         module_name = self.get_trained_class_module_name()
@@ -312,12 +320,12 @@ class ThresholdML(VTKPythonAlgorithmBase):
 
         net = module.Net()
         net.load_state_dict(torch.load(self.model_path))
-        numpy_array = numpy_array.reshape((1, -1))[0]
+        # numpy_array = numpy_array.reshape((1, -1))[0]
         print(numpy_array.shape)
-        torch_array = torch.from_numpy(numpy_array).to(torch.float)
-        torch_array = torch.unsqueeze(torch_array, 1)
+        torch_array = torch.from_numpy(numpy_array.copy()).to(torch.float)
+        if no_components < 2:
+            torch_array = torch.unsqueeze(torch_array, 1)
         print(torch_array.shape)
-        # net.forward(torch_array)
         outputs = net.predict(torch_array)
         # print(outputs)
         return outputs.detach().numpy()
