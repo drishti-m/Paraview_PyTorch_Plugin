@@ -172,15 +172,17 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
         no_arrays = pdi.GetPointData().GetNumberOfArrays()
         float_array = pdi.GetPointData().GetAbstractArray(0)
         numpy_array = ns.vtk_to_numpy(float_array)
-        tf_array = numpy_array > self.threshold_cut
+        # print(numpy_array.shape)
+
+        if float_array.GetNumberOfComponents() > 1:
+            mag = np.array([np.sqrt(x.dot(x)) for x in numpy_array])
+            tf_array = mag > self.threshold_cut
+        else:
+            tf_array = numpy_array > self.threshold_cut
         seg_array = tf_array.astype(int)
         vtk_double_array = DA.numpyTovtkDataArray(
             seg_array, name="numpy_array")
-        for i in seg_array:
-            if i == 0 or i == 1:
-                good = 0
-            else:
-                print("middle:", i)
+
         output = vtkRectilinearGrid.GetData(outInfoVec, 0)
 
         return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
@@ -292,15 +294,17 @@ class ThresholdML(VTKPythonAlgorithmBase):
         no_components = float_array.GetNumberOfComponents()
         numpy_array = ns.vtk_to_numpy(float_array)
 
-        if no_components < 2:
+        if no_components <= 1:
             numpy_array = numpy_array.reshape((1, -1))[0]
 
         torch_np_array = self.trained_threshold(numpy_array, no_components)
 
-        print("after predct", torch_np_array.shape,
-              "to convert", numpy_array.shape)
-
-        print(torch_np_array.shape)
+        # print("after predct", torch_np_array.shape,
+        #       "to convert", numpy_array.shape)
+        # torch_np_array = torch_np_array.reshape(x, y)
+        # torch_np_array = np.flip(torch_np_array, axis=0)
+        # torch_np_array = torch_np_array.reshape(x*y, z)
+        # print(torch_np_array.shape)
 
         vtk_double_array = DA.numpyTovtkDataArray(
             torch_np_array, name="threshold_pixels")
