@@ -294,25 +294,14 @@ class ThresholdML(VTKPythonAlgorithmBase):
         no_components = float_array.GetNumberOfComponents()
         numpy_array = ns.vtk_to_numpy(float_array)
 
-        if no_components <= 1:
-            numpy_array = numpy_array.reshape((1, -1))[0]
-
         torch_np_array = self.trained_threshold(numpy_array, no_components)
-
-        # print("after predct", torch_np_array.shape,
-        #       "to convert", numpy_array.shape)
-        # torch_np_array = torch_np_array.reshape(x, y)
-        # torch_np_array = np.flip(torch_np_array, axis=0)
-        # torch_np_array = torch_np_array.reshape(x*y, z)
-        # print(torch_np_array.shape)
 
         vtk_double_array = DA.numpyTovtkDataArray(
             torch_np_array, name="threshold_pixels")
-        print(vtk_double_array)
+        # print(vtk_double_array)
         # vtk_double_array.SetNumberOfComponents(
         #     float_array.GetNumberOfComponents())
 
-        print(vtk_double_array)
         return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
 
     def trained_threshold(self, numpy_array, no_components):
@@ -326,10 +315,23 @@ class ThresholdML(VTKPythonAlgorithmBase):
         net.load_state_dict(torch.load(self.model_path))
         # numpy_array = numpy_array.reshape((1, -1))[0]
         print(numpy_array.shape)
+
         torch_array = torch.from_numpy(numpy_array.copy()).to(torch.float)
         if no_components < 2:
             torch_array = torch.unsqueeze(torch_array, 1)
         print(torch_array.shape)
+
+        criterion = nn.CrossEntropyLoss()
+        model_outputs = net.forward(torch_array)
+        mag = np.array([np.sqrt(x.dot(x)) for x in torch_array])
+        exp_output = mag > 0.01000
+        exp_output = exp_output.astype(float)
+        exp_output = torch.from_numpy(exp_output).to(torch.long)
+        v_loss = criterion(model_outputs, exp_output)
+        timestep = self.GetInputDataObject(0, 0).GetInformation().Get(
+            vtk.vtkDataObject.DATA_TIME_STEP())
+        print("Loss in timestep", timestep, " = ", v_loss.item())
+
         outputs = net.predict(torch_array)
         # print(outputs)
         return outputs.detach().numpy()
