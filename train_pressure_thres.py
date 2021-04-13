@@ -1,4 +1,4 @@
-# working binary classifier
+# working binary classifier for pressure data
 # ref: https://medium.com/@prudhvirajnitjsr/simple-classifier-using-pytorch-37fba175c25c
 from torch.utils.tensorboard import SummaryWriter
 import torch
@@ -13,10 +13,12 @@ class Dataset:
     def __init__(self):
         self.input_data = []
         self.output_data = []
+        self.total_data_amt = 0.0
 
     def _addData(self, elements):
         #t_i = torch.from_numpy(elements).to(torch.float)
         self.input_data.append(elements)
+        self.total_data_amt += len(elements)
         return self.input_data
 
     def _output_array(self):
@@ -34,28 +36,44 @@ class Dataset:
 
         return self.input_data
 
+    def read_arrays(path, delimiter=','):
+        arrays_19 = np.genfromtxt(path, delimiter=delimiter)
+        arrays_19 = arrays_19[1:]
+        arrays_19 = arrays_19[:, 4]
+
+        return arrays_19
+
+
+all_arrays = []
+for i in range(0, 10, 1):
+    path = 'pressure_data_' + str(i) + ".csv"
+    print(path)
+    current_array = read_arrays(path)
+    # print (np.array(current_array).flatten())
+    all_arrays.append(np.array(current_array).flatten())
+all_arrays = np.array(all_arrays)
 
 dataset = Dataset()
-dataset._addData(np.arange(-2.0102, 2.0104,  0.051))
-dataset._addData(np.arange(-2.5103, 2.5123, 0.0456))
-dataset._addData(np.arange(-8.5134, 8.51234, 0.1109))
-dataset._addData(np.arange(-1.1344, 10.51234, 0.0910))
-dataset._addData(np.arange(0.5000, 12.51234, 0.1234))
-dataset._addData(np.array([-0.0212228]))
-dataset._addData(np.arange(-20.50, 20.51234, 0.011113))
-dataset._addData(np.arange(-20.51, 20.51234, 0.04))
-dataset._addData(np.arange(-80.5134, 80.51234, 0.1))
-dataset._addData(np.arange(-10.134, 10.51234, 0.09))
-dataset._addData(np.arange(0.5, 30.5, 0.1))
-dataset._addData(np.arange(-0.5, 30.5, 0.1))
-dataset._addData(np.arange(1.556, 45.67899, 0.1))
-dataset._addData(np.arange(10.0, 145.67899, 0.134))
-dataset._addData(np.arange(100.1345, 300.9876, 1.567))
-dataset._addData(np.arange(0.000, 23.9560, 0.0123))
-dataset._addData(np.arange(-3.0345, -1.0345, 0.0134))
+
+dataset._addData(all_arrays[0])
+dataset._addData(all_arrays[1])
+dataset._addData(all_arrays[3])
+dataset._addData(all_arrays[5])
+dataset._addData(all_arrays[6])
+dataset._addData(all_arrays[9])
+dataset._addData(all_arrays[8])
+
 input_images = dataset.input_data
 output_images = dataset._output_array()
 input_images = dataset._convert_to_torch()
+
+validation_dataset = Dataset()
+validation_dataset._addData(all_arrays[2])
+validation_dataset._addData(all_arrays[4])
+validation_dataset._addData(all_arrays[7])
+validation_input = validation_dataset.input_data
+validation_output = validation_dataset._output_array()
+validation_input = validation_dataset._convert_to_torch()
 
 
 writer = SummaryWriter()
@@ -66,9 +84,9 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         # First fully connected layer
-        self.fc1 = nn.Linear(1, 5)
+        self.fc1 = nn.Linear(1, 50)
         # Second fully connected layer that outputs our 1 output channel (image)
-        self.fc2 = nn.Linear(5, 2)
+        self.fc2 = nn.Linear(50, 2)
         # self.fc3 = nn.Linear(5, 2)
         # self.sigmoid = nn.Sigmoid()
     # x represents our data
@@ -110,6 +128,9 @@ no_epochs = 2000
 for epoch in range(no_epochs):  # loop over the dataset multiple times
 
     running_loss = 0.0
+    validation_loss = 0.0
+    avg_t_loss = 0.0
+    avg_v_loss = 0.0
     # get the inputs; data is a list of [inputs, labels]
 
     train_output = []
@@ -121,18 +142,32 @@ for epoch in range(no_epochs):  # loop over the dataset multiple times
         outputs = net.forward(torch.unsqueeze(input_images[idx], 1))
         #print(outputs )
         train_output.append(outputs)
-        loss = criterion(outputs, output_images[idx])  # tensor_output)
-        writer.add_scalar("Loss/train", loss, epoch)
-        loss.backward()
+        t_loss = criterion(outputs, output_images[idx])  # tensor_output)
+        # writer.add_scalar("Loss/train", t_loss, epoch)
+        t_loss.backward()
         optimizer.step()
         # scheduler.step(loss.item())
-        running_loss += loss.item()
-        print('[%d] loss: %.3f' %
-              (idx,  loss.item()))
-writer.flush()
+        running_loss += t_loss.item()
 
-# outputs = net.predict(torch.unsqueeze(input_images[0],1))
-# print(outputs, output_images[0])
+        print('[%d] loss: %.3f' %
+              (idx,  t_loss.item()))
+    avg_t_loss = running_loss / len(input_images)
+
+    for idx in range(len(validation_input)):
+        # forward + backward + optimize
+        outputs = net.forward(torch.unsqueeze(validation_input[idx], 1))
+        v_loss = criterion(outputs, validation_output[idx])
+
+        # scheduler.step(loss.item())
+        validation_loss += v_loss.item()
+    avg_v_loss = validation_loss / len(validation_input)
+
+    writer.add_scalars(
+        "Loss/epoch", {'valid': avg_v_loss, 'train': avg_t_loss}, epoch)
+
+writer.flush()
+outputs = net.predict(torch.unsqueeze(input_images[0], 1))
+print(outputs, output_images[0])
 print('Finished Training')
-PATH = './pressure_threshold.pth'
+PATH = './threshold.pth'
 torch.save(net.state_dict(), PATH)

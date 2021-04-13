@@ -357,7 +357,7 @@ class ThresholdMaxML(VTKPythonAlgorithmBase):
             vtk.vtkDataObject.DATA_TIME_STEP())
         print("Loss in timestep", timestep, " = ", v_loss.item())
 
-        classes = ["yes", "no"]
+        classes = ["LOW", "HIGH"]
         o_tensors = net(torch_array)
         percentages = torch.nn.functional.softmax(o_tensors, dim=1)[0] * 100
         _, indices = torch.sort(o_tensors[0], descending=True)

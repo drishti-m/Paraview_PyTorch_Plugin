@@ -1,4 +1,4 @@
-# working binary classifier for max pressure data
+# working binary classifier for MAX pressure data
 # ref: https://medium.com/@prudhvirajnitjsr/simple-classifier-using-pytorch-37fba175c25c
 from torch.utils.tensorboard import SummaryWriter
 import torch
@@ -65,6 +65,7 @@ dataset._addData(all_arrays[5])
 dataset._addData(all_arrays[6])
 dataset._addData(all_arrays[9])
 dataset._addData(all_arrays[8])
+dataset._addData(all_arrays[4])
 
 input_images = dataset.input_data
 output_images = dataset._output_array()
@@ -72,7 +73,7 @@ input_images = dataset._convert_to_torch()
 
 validation_dataset = Dataset()
 validation_dataset._addData(all_arrays[2])
-validation_dataset._addData(all_arrays[4])
+# validation_dataset._addData(all_arrays[4])
 validation_dataset._addData(all_arrays[7])
 
 validation_input = validation_dataset.input_data
