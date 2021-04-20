@@ -8,7 +8,6 @@ import os
 import vtk
 from vtk.util import numpy_support
 from paraview.vtk.util import numpy_support as ns
-import matplotlib.pyplot as plt
 from paraview import simple
 import numpy as np
 from vtkmodules.numpy_interface import dataset_adapter as DA
