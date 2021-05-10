@@ -8,7 +8,6 @@ import os
 import vtk
 from vtk.util import numpy_support
 from paraview.vtk.util import numpy_support as ns
-import matplotlib.pyplot as plt
 from paraview import simple
 import numpy as np
 from vtkmodules.numpy_interface import dataset_adapter as DA
@@ -19,7 +18,7 @@ from vtkmodules.numpy_interface import dataset_adapter as DA
 @smdomain.datatype(dataTypes=["vtkImageData"], composite_data_supported=False)
 # @smproperty.input(name="InputDataset", port_index=0)
 # @smdomain.datatype(dataTypes=["vtkDataSet"], composite_data_supported=False)
-class ThresholdMaxImage(VTKPythonAlgorithmBase):
+class ThresholdImage(VTKPythonAlgorithmBase):
     threshold_cut = 0.1
 
     def __init__(self):
@@ -88,7 +87,7 @@ class ThresholdMaxImage(VTKPythonAlgorithmBase):
 @smproxy.filter()
 @smproperty.input(name="InputRectilinear", port_index=0)
 @smdomain.datatype(dataTypes=["vtkRectilinearGrid", "vtkImageData"], composite_data_supported=True)
-class ThresholdMaxRectilinear(VTKPythonAlgorithmBase):
+class ThresholdRectilinear(VTKPythonAlgorithmBase):
     threshold_cut = 0.5
     input_data_type = ""
     t_port = 0
@@ -176,14 +175,10 @@ class ThresholdMaxRectilinear(VTKPythonAlgorithmBase):
 
         if float_array.GetNumberOfComponents() > 1:
             mag = np.array([np.sqrt(x.dot(x)) for x in numpy_array])
-            mag = np.max(mag)
             tf_array = mag > self.threshold_cut
         else:
-            tf_array = np.max(numpy_array)
-            tf_array = tf_array > self.threshold_cut
-        seg_array = np.full((x*y, z), tf_array[0].astype(int))
-        # seg_array.fill(tf_array.astype(int))
-        print(seg_array.shape, seg_array)
+            tf_array = numpy_array > self.threshold_cut
+        seg_array = tf_array.astype(int)
         vtk_double_array = DA.numpyTovtkDataArray(
             seg_array, name="numpy_array")
 
@@ -214,7 +209,7 @@ class ThresholdMaxRectilinear(VTKPythonAlgorithmBase):
 @smproxy.filter()
 @smproperty.input(name="InputRectilinear", port_index=0)
 @smdomain.datatype(dataTypes=["vtkRectilinearGrid", "vtkImageData"], composite_data_supported=True)
-class ThresholdMaxML(VTKPythonAlgorithmBase):
+class ThresholdML(VTKPythonAlgorithmBase):
     input_data_type = ""
     t_port = 0
     t_index = 0
@@ -223,7 +218,7 @@ class ThresholdMaxML(VTKPythonAlgorithmBase):
 
     def __init__(self):
         VTKPythonAlgorithmBase.__init__(
-            self, nInputPorts=1, nOutputPorts=1, outputType="vtkTable")
+            self, nInputPorts=1, nOutputPorts=1, outputType="vtkRectilinearGrid")
 
     def FillInputPortInformation(self, port, info):
         # self = vtkPythonAlgorithm
@@ -238,29 +233,24 @@ class ThresholdMaxML(VTKPythonAlgorithmBase):
         return 1
 
     def RequestData(self, request, inInfoVec, outInfoVec):
-        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData, vtkTable
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
 
         self.input_data_type = self.GetInputDataObject(
             self.t_port, self.t_index).GetClassName()
         if self.input_data_type == "vtkRectilinearGrid":
-            predictions_vtk, strArray, x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Process_RectlinearGrid(
+            x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Process_RectlinearGrid(
                 inInfoVec, outInfoVec)
         elif self.input_data_type == "vtkImageData":
             x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Convert_Img_To_Rectilinear(
                 inInfoVec)
+        output = vtkRectilinearGrid.GetData(outInfoVec, 0)
+        output.SetDimensions(x, y, z)
+        output.SetXCoordinates(xCoords)
+        output.SetYCoordinates(yCoords)
+        output.SetZCoordinates(zCoords)
 
-        out = vtkTable.GetData(outInfoVec, 0)
-        dsa = out.GetRowData()
-        dsa.AddArray(predictions_vtk)
-        dsa.AddArray(strArray)
-        # output = vtkRectilinearGrid.GetData(outInfoVec, 0)
-        # output.SetDimensions(x, y, z)
-        # output.SetXCoordinates(xCoords)
-        # output.SetYCoordinates(yCoords)
-        # output.SetZCoordinates(zCoords)
-
-        # output.GetPointData().SetScalars(vtk_double_array)
+        output.GetPointData().SetScalars(vtk_double_array)
 
         return 1
 
@@ -289,17 +279,6 @@ class ThresholdMaxML(VTKPythonAlgorithmBase):
             torch_np_array, name="threshold_pixels")
         return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
 
-    def Create_vtkTable_Columns(self, predictions_np, predicted_classes):
-        predictions_vtk = ns.numpy_to_vtk(predictions_np)
-        predictions_vtk.SetName("Predicted Values")
-        strArray = vtk.vtkStringArray()
-
-        strArray.SetName("Label names")
-        strArray.SetNumberOfTuples(len(predicted_classes))
-        for i in range(0, len(predicted_classes), 1):
-            strArray.SetValue(i, predicted_classes[i])
-        return predictions_vtk, strArray
-
     def Process_RectlinearGrid(self, inInfoVec, outInfoVec):
         from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
@@ -314,20 +293,15 @@ class ThresholdMaxML(VTKPythonAlgorithmBase):
         no_components = float_array.GetNumberOfComponents()
         numpy_array = ns.vtk_to_numpy(float_array)
 
-        torch_np_array, predictions_np, predicted_classes = self.trained_threshold(
-            numpy_array, no_components)
-        predictions_vtk, strArray = self.Create_vtkTable_Columns(
-            predictions_np, predicted_classes)
+        torch_np_array = self.trained_threshold(numpy_array, no_components)
 
-        print("Predicted: ", torch_np_array)
-        torch_np_array = np.full((x*y, z), torch_np_array[0])
         vtk_double_array = DA.numpyTovtkDataArray(
             torch_np_array, name="threshold_pixels")
         # print(vtk_double_array)
         # vtk_double_array.SetNumberOfComponents(
         #     float_array.GetNumberOfComponents())
 
-        return predictions_vtk, strArray, x, y, z, xCoords, yCoords, zCoords, vtk_double_array
+        return x, y, z, xCoords, yCoords, zCoords, vtk_double_array
 
     def trained_threshold(self, numpy_array, no_components):
         from importlib import import_module
@@ -342,35 +316,24 @@ class ThresholdMaxML(VTKPythonAlgorithmBase):
         print(numpy_array.shape)
 
         torch_array = torch.from_numpy(numpy_array.copy()).to(torch.float)
-        torch_array = torch.stack([torch_array, torch_array], dim=0)
+        if no_components < 2:
+            torch_array = torch.unsqueeze(torch_array, 1)
         print(torch_array.shape)
 
         criterion = nn.CrossEntropyLoss()
         model_outputs = net.forward(torch_array)
         mag = np.array([np.sqrt(x.dot(x)) for x in torch_array])
-        exp_output = np.max(mag) > 0.0
+        exp_output = mag > 0.01000
         exp_output = exp_output.astype(float)
-        exp_output = np.array([exp_output, exp_output])
         exp_output = torch.from_numpy(exp_output).to(torch.long)
         v_loss = criterion(model_outputs, exp_output)
         timestep = self.GetInputDataObject(0, 0).GetInformation().Get(
             vtk.vtkDataObject.DATA_TIME_STEP())
-        print("Loss in timestep", timestep, " = ", v_loss.item())
-
-        classes = ["LOW", "HIGH"]
-        o_tensors = net(torch_array)
-        percentages = torch.nn.functional.softmax(o_tensors, dim=1)[0] * 100
-        _, indices = torch.sort(o_tensors[0], descending=True)
-        predictions_np = [percentages[idx].item()
-                          for idx in indices]
-
-        predicted_classes = [classes[idx]
-                             for idx in indices]
-        print(predictions_np, predicted_classes)
+        # print("Loss in timestep", timestep, " = ", v_loss.item())
 
         outputs = net.predict(torch_array)
         # print(outputs)
-        return outputs.detach().numpy(), predictions_np, predicted_classes
+        return outputs.detach().numpy()
 
     def get_trained_class_module_name(self):
         import sys

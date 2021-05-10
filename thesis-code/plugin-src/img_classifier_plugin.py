@@ -69,7 +69,7 @@ class ML_Classifier(VTKPythonAlgorithmBase):
     def Pre_Process_Image(self, img):
         transform = transforms.Compose([transforms.ToPILImage(),
                                         transforms.Resize(256),
-                                        transforms.CenterCrop(224),
+                                        # transforms.CenterCrop(224),
                                         transforms.ToTensor(),
                                         transforms.Normalize(
             mean=[0.485, 0.456, 0.406],
