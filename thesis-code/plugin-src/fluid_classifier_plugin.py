@@ -1,3 +1,15 @@
+"""
+This is the plugin code for fluid classifier (for scalar data eg, pressure).
+Accepted input data models: VTK Rectilinear Grid
+Output data model: VTK Table
+It takes from user two parameters: Trained Model's Path, Model's Class Defn Path.
+The path can be either absolute or relative to Paraview's binary executable location.
+This plugin is designed to classify a Grid as "High" or "Low" depending on whether 
+the max value of a grid is greater or lesser than the threshold value respectively.
+Threshold value is determined during training of model.
+
+"""
+
 from paraview.util.vtkAlgorithm import *
 from paraview.vtk.util import numpy_support as ns
 from paraview import simple
@@ -61,10 +73,10 @@ class ThresholdMaxML(VTKPythonAlgorithmBase):
         strArray: VTK array of corresponding classes
         """
         predictions_vtk = ns.numpy_to_vtk(predictions_np)
-        predictions_vtk.SetName("Predicted Values")
+        predictions_vtk.SetName("Confidence %")
         strArray = vtk.vtkStringArray()
 
-        strArray.SetName("Label names")
+        strArray.SetName("Predicted Labels")
         strArray.SetNumberOfTuples(len(predicted_classes))
         for i in range(0, len(predicted_classes), 1):
             strArray.SetValue(i, predicted_classes[i])
@@ -175,13 +187,13 @@ class ThresholdMaxML(VTKPythonAlgorithmBase):
         module_name = Path(self.class_path).stem
         return module_name
 
-    @ smproperty.stringvector(name="Trained Model Path")
+    @ smproperty.stringvector(name="Trained Model's Path")
     def SetModelPathR(self, x):
         print("Model path: ", x)
         self.model_path = x
         self.Modified()
 
-    @ smproperty.stringvector(name="Model's Class Path")
+    @ smproperty.stringvector(name="Model's Class Defn Path")
     def SetClassPath(self, x):
         print("Class path: ", x)
         self.class_path = x

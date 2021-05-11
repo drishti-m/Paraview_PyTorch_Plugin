@@ -1,3 +1,13 @@
+"""
+This is the plugin code for image or rectilinear grid classifier.
+Accepted input data models: VTK Rectilinear Grid, VTK Image Data
+Output data model: VTK Table
+It takes from user two parameters: Trained Model's Path, Class Labels Path.
+The path can be either absolute or relative to Paraview's binary executable location.
+This plugin is designed to classify an image / grid into one of the pre-defined classes or labels.
+The output displays classification labels with top 10 highest confidence scores.
+"""
+
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -23,15 +33,16 @@ class ML_Classifier(VTKPythonAlgorithmBase):
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkTable")
 
+    # First step in pipeline: set Port info
     def FillInputPortInformation(self, port, info):
-        # self = vtkPythonAlgorithm
         if port == 0:
             self.t_port = port
-            self.t_index = info.Get(self.INPUT_CONNECTION())  # connection
+            self.t_index = info.Get(self.INPUT_CONNECTION())
 
         print("port info set")
         return 1
 
+    # Request Data from input and create output
     def RequestData(self, request, inInfoVec, outInfoVec):
         from vtkmodules.vtkCommonDataModel import vtkTable, vtkImageData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
@@ -55,6 +66,17 @@ class ML_Classifier(VTKPythonAlgorithmBase):
         return 1
 
     def Get_Input_Array(self, inInfoVec, i_type):
+        """
+        Helper function to extract VTK data array from input source.
+
+        Args:
+        inInfoVec: Information vector holding source input info
+        i_type: VTK Data Model Type of source input
+
+        Returns: 
+        pixels_vtk_array: vtk array of input
+        x,y,z: x, y, and z dimensions of input
+        """
         from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
         if i_type == "image":
@@ -67,6 +89,15 @@ class ML_Classifier(VTKPythonAlgorithmBase):
         return pixels_vtk_array, x, y, z
 
     def Pre_Process_Image(self, img):
+        """
+        Helper function to pre-process image according to pre-trained model
+
+        Args: 
+        img: Original image
+
+        Returns:
+        img_t: Pre-processed image (transformed)
+        """
         transform = transforms.Compose([transforms.ToPILImage(),
                                         transforms.Resize(256),
                                         # transforms.CenterCrop(224),
@@ -80,42 +111,91 @@ class ML_Classifier(VTKPythonAlgorithmBase):
         return img_t
 
     def Get_Model_Labels(self, labels_path):
+        """
+        Get class labels by reading the file at labels_path
+        """
         with open(labels_path) as f:
             classes = [line.strip() for line in f.readlines()]
         return classes
 
     def Make_Predictions(self, out, classes):
+        """
+        Get the top 10 predicted labels based on highest confidence values.
+
+        Args:
+        out: Output weights of the trained model
+        classes: Array of class labels
+
+        Returns:
+        predictions_np: Predicted confidence values as Numpy array
+        predicted_classes: Corresponding class labels
+        """
         _, index = torch.max(out, 1)
 
         percentage = torch.nn.functional.softmax(out, dim=1)[0] * 100
 
-        #print(classes[index[0]], percentage[index[0]].item())
         _, indices = torch.sort(out, descending=True)
+        if len(indices[0]) > 10:
+            no_labels_for_display = 10
+        else:
+            no_labels_for_display = len(indices[0])
+
         predictions_np = [percentage[idx].item()
-                          for idx in indices[0][:10]]
+                          for idx in indices[0][:no_labels_for_display]]
         predicted_classes = [classes[idx]
-                             for idx in indices[0][:10]]
+                             for idx in indices[0][:no_labels_for_display]]
         return predictions_np, predicted_classes
-        # print([(classes[idx], percentage[idx].item())
-        #        for idx in indices[0][:5]])
 
     def Create_vtkTable_Columns(self, predictions_np, predicted_classes):
+        """
+        Helper function to create rows and columns for table
+
+        Args:
+        predictions_np: numpy array of predicted confidence values
+        predicted_classes: string array of corresponding classes
+
+        Returns:
+        predictions_vtk: VTK array for predicted confidence values 
+        strArray: VTK array of corresponding classes
+        """
         predictions_vtk = ns.numpy_to_vtk(predictions_np)
-        predictions_vtk.SetName("Predicted Values")
+        predictions_vtk.SetName("Confidence %")
         strArray = vtk.vtkStringArray()
 
-        strArray.SetName("Label names")
+        strArray.SetName("Predicted Labels")
         strArray.SetNumberOfTuples(len(predicted_classes))
         for i in range(0, len(predicted_classes), 1):
             strArray.SetValue(i, predicted_classes[i])
         return predictions_vtk, strArray
 
     def Forward_Pass(self, img_t, net):
+        """
+        Helper function to do forward pass in neural network model.
+
+        Args:
+        img_t: Pre-processed image
+        net: Neural network model
+
+        Returns:
+        batch_t: Batch array for feeding model
+        out: Output weights of model
+        """
         batch_t = torch.unsqueeze(img_t, 0)
         out = net(batch_t)
         return batch_t, out
 
     def Classify_Image(self, pixels_vtk_array, x, y, z):
+        """
+        Helper function to carry out entire model inference process.
+
+        Args:
+        pixels_vtk_array: VTK array of input with pixel info
+        x,y,z : dimensions of input VTK data model
+
+        Returns:
+        predictions_vtk: VTK array for predicted confidence values 
+        strArray: VTK array of corresponding classes
+        """
         self.labels_path = "./pytorch_data/imagenet_classes.txt"
         self.model_path = './pytorch_data/alexnet.pth'
 
