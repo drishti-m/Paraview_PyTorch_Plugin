@@ -1,16 +1,23 @@
-import torch
-import torchvision
-from torchvision import models
-import torchvision.transforms as T
-import torch.nn as nn
-import torch.nn.functional as F
-import os
+"""
+This is the plugin code for image segmentation.
+Accepted input data models: VTK Image Data
+Output data model: VTK Image Data
+It takes from user one parameters: Trained Model's Path.
+The path can be either absolute or relative to Paraview's binary executable location.
+This plugin is designed to segment an image based on training model. The segmented labels can be colored as either greyscale or RBG values.
+"""
 from vtk.util import numpy_support
 from paraview.vtk.util import numpy_support as ns
 from paraview import simple
 from paraview.util.vtkAlgorithm import *
-import numpy as np
 from vtkmodules.numpy_interface import dataset_adapter as DA
+import torch
+import torchvision
+import torchvision.transforms as T
+import torch.nn as nn
+import torch.nn.functional as F
+import os
+import numpy as np
 
 
 @smproxy.filter()
@@ -25,7 +32,8 @@ class ML_Img_Segmentation(VTKPythonAlgorithmBase):
     def __init__(self):
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkImageData")
-
+    
+    # First step in pipeline: set Port info
     def FillInputPortInformation(self, port, info):
         if port == 0:
             self.t_port = port
@@ -34,6 +42,7 @@ class ML_Img_Segmentation(VTKPythonAlgorithmBase):
         print("port info set")
         return 1
 
+     # Request Data from input and create output
     def RequestData(self, request, inInfoVec, outInfoVec):
         from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
         from vtkmodules.vtkCommonCore import VTK_DOUBLE
@@ -62,7 +71,7 @@ class ML_Img_Segmentation(VTKPythonAlgorithmBase):
         y: y-dimension of vtkImageData containing pixels_vtk_array
 
         Returns:
-        numpy array of shape (y,x,3) representing RGB values
+        pixels_np_array: numpy array of shape (y,x,3) representing RGB values
 
         """
         pixels_np_array = ns.vtk_to_numpy(pixels_vtk_array)
@@ -81,7 +90,8 @@ class ML_Img_Segmentation(VTKPythonAlgorithmBase):
         rgb_array: numpy array of shape (x,y,3)
 
         Returns:
-        vtk array of shape (x*y, 1)
+        vtk_output: vtk array of shape (x*y, 1)
+        r_y, r_x, r_z : shape of vtk output before reshaping
 
         """
         r_x, r_y = rgb_array.shape
