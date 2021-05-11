@@ -16,7 +16,7 @@ from vtkmodules.numpy_interface import dataset_adapter as DA
 @smproxy.filter()
 @smproperty.input(name="segmentation", port_index=0)
 @smdomain.datatype(dataTypes=["vtkImageData"], composite_data_supported=True)
-class ML_Segmentation(VTKPythonAlgorithmBase):
+class ML_Img_Segmentation(VTKPythonAlgorithmBase):
     input_data_type = ""
     t_port = 0
     t_index = 0
@@ -27,11 +27,7 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkImageData")
 
     def FillInputPortInformation(self, port, info):
-        # self = vtkPythonAlgorithm
         if port == 0:
-
-            # info.Set(self.INPUT_REQUIRED_DATA_TYPE(),
-            #          "vtkRectilinearGrid")
             self.t_port = port
             self.t_index = info.Get(self.INPUT_CONNECTION())  # connection
 
@@ -44,9 +40,6 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
 
         self.input_data_type = self.GetInputDataObject(
             self.t_port, self.t_index).GetClassName()
-        # if self.input_data_type == "vtkRectilinearGrid":
-        #     x, y, z, xCoords, yCoords, zCoords, vtk_double_array = self.Process_RectlinearGrid(
-        #         inInfoVec, outInfoVec)
 
         if self.input_data_type == "vtkImageData":
             rgb_output_vtk, x, y, z = self.Segment_Image(
@@ -73,7 +66,6 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
 
         """
         pixels_np_array = ns.vtk_to_numpy(pixels_vtk_array)
-        # print(pixels_np_array)
 
         # x, y reversed between vtk <-> numpy array
         pixels_np_array = pixels_np_array.reshape((y, x, 3))
@@ -92,7 +84,6 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         vtk array of shape (x*y, 1)
 
         """
-        #r_x, r_y, r_z = rgb_array.shape
         r_x, r_y = rgb_array.shape
         r_z = 1
         rgb_array = np.flip(rgb_array, axis=0)
@@ -121,9 +112,7 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
 
         x, y, z = pdi.GetDimensions()
         print("Shape of input vtk Image: ", x, y, z)
-        #no_arrays = pdi.GetPointData().GetNumberOfArrays()
         pixels_vtk_array = pdi.GetPointData().GetAbstractArray(0)
-        # print(pixels_vtk_array)
 
         pixels_np_array = self.convert_vtk_to_numpy(pixels_vtk_array, x, y)
         print("Converted vtk array to suitable numpy representation with shape: ",
@@ -155,50 +144,44 @@ class ML_Segmentation(VTKPythonAlgorithmBase):
         nc = number of labels + 1
 
         Returns:
-        rgb: rgb value of decoded pixels
+        segmented_img: segmented pixels, either in greyscale or RGB
 
         """
-        # label_colors = np.array([(0, 0, 0),  # 0=background
-        #                          # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
-        #                          (128, 0, 0), (0, 128, 0), (128, 128,
-        #                                                     0), (0, 0, 128), (128, 0, 128),
-        #                          # 6=bus, 7=car, 8=cat, 9=chair, 10=cow
-        #                          (0, 128, 128), (128, 128, 128), (64,
-        #                                                           0, 0), (192, 0, 0), (64, 128, 0),
-        #                          # 11=dining table, 12=dog, 13=horse, 14=motorbike, 15=person
-        #                          (192, 128, 0), (64, 0, 128), (192, 0,
-        #                                                        128), (64, 128, 128), (192, 128, 128),
-        #                          # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
-        #                          (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0), (0, 64, 128)])
-        # label_colors = np.array([(0, 0, 0),  # (24, 24, 24),  # 0=background
-        #                          # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
-        #                          (12, 12, 12), (148, 148, 148), (48, 48,
-        #                                                          48), (60, 60, 60), (72, 72, 72),
-        #                          # 6=bus, 7=car, 8=cat, 9=chair, 10=cow
-        #                          (84, 84, 84), (96, 96, 96), (108, 108,
-        #                                                       108), (120, 120, 120), (132, 132, 132),
-        #                          # 11=dining table, 12=dog, 13=horse, 14=motorbike, 15=person
-        #                          (144, 144, 144), (156, 156, 156), (168, 168,
-        #                                                             168), (180, 180, 180), (192, 192, 192),
-        #                          # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
-        #                          (204, 204, 204), (216, 216, 216), (228, 228, 228), (240, 240, 240), (252, 252, 252)])
-        # label_colors = np.array([[0], [12], [148], [48], [60], [72], [84], [96], [108],
-        #                          [120], [132], [144], [156], [168], [180], [192], [204], [216], [228], [240], [252]])
-        label_colors = np.array([0, 185, 139, 48, 60, 72, 84, 96, 108,
-                                 120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252])
-        r = np.zeros_like(image).astype(np.uint8)
-        g = np.zeros_like(image).astype(np.uint8)
-        b = np.zeros_like(image).astype(np.uint8)
+        mode = "greyscale"
+        if mode == "greyscale":
+            label_colors = np.array([0, 185, 139, 48, 60, 72, 84, 96, 108,
+                                     120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252])
+            gr = np.zeros_like(image).astype(np.uint8)
 
-        for l in range(0, nc):
-            idx = image == l
-            r[idx] = label_colors[l]  # label_colors[l, 0]
-            #g[idx] = label_colors[l, 1]
-            #b[idx] = label_colors[l, 2]
+            for l in range(0, nc):
+                idx = image == l
+                gr[idx] = label_colors[l]
+            segmented_img = np.stack(gr, axis=0)
+        elif mode == "rgb":
+            label_colors = np.array([(0, 0, 0),  # 0=background
+                                     # 1=aeroplane, 2=bicycle, 3=bird, 4=boat, 5=bottle
+                                     (128, 0, 0), (0, 128, 0), (128, 128,
+                                                                0), (0, 0, 128), (128, 0, 128),
+                                     # 6=bus, 7=car, 8=cat, 9=chair, 10=cow
+                                     (0, 128, 128), (128, 128, 128), (64,
+                                                                      0, 0), (192, 0, 0), (64, 128, 0),
+                                     # 11=dining table, 12=dog, 13=horse, 14=motorbike, 15=person
+                                     (192, 128, 0), (64, 0, 128), (192, 0,
+                                                                   128), (64, 128, 128), (192, 128, 128),
+                                     # 16=potted plant, 17=sheep, 18=sofa, 19=train, 20=tv/monitor
+                                     (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0), (0, 64, 128)])
+            r = np.zeros_like(image).astype(np.uint8)
+            g = np.zeros_like(image).astype(np.uint8)
+            b = np.zeros_like(image).astype(np.uint8)
 
-        #rgb = np.stack([r, g, b], axis=2)
-        rgb = np.stack(r, axis=0)
-        return rgb
+            for l in range(0, nc):
+                idx = image == l
+                r[idx] = label_colors[l, 0]
+                g[idx] = label_colors[l, 1]
+                b[idx] = label_colors[l, 2]
+
+            segmented_img = np.stack([r, g, b], axis=2)
+        return segmented_img
 
     @smproperty.stringvector(name="Trained Model Path")
     def SetModelPathR(self, x):

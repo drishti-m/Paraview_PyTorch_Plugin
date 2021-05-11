@@ -22,7 +22,7 @@ import numpy as np
 @smproxy.filter()
 @smproperty.input(name="classifier", port_index=0)
 @smdomain.datatype(dataTypes=["vtkImageData", "vtkRectilinearGrid"], composite_data_supported=True)
-class ML_Classifier(VTKPythonAlgorithmBase):
+class ML_Img_Classifier(VTKPythonAlgorithmBase):
     input_data_type = ""
     t_port = 0
     t_index = 0
