@@ -31,6 +31,8 @@ pip install -r pip-requirements.txt
 Some packages are not available in conda so those packages are listed in pip-requirements and are to be 
 installed via pip.
 
+
+
 ## Instructions to use filter plugin in Paraview
 1. In the conda environment you built, open Paraview
 2. Go to `Tools -> Manage Plugins -> Load New`.
@@ -52,8 +54,8 @@ The test plugins in this repository are named as follows:
 The test plugins are to see the ground truth results of computed fluid classification and segmentation, and are used to compare with the ML based classification & segmentation.
 
 ## Instructions to train the models
-The pre-trained models are already provided in the directory `pre-trained-models`. The models for image classification and segmentation were downloaded from PyTorch, rest were trained by author. But, if you wish to
-train the model for fluid classification and segmentation, follow the instructions below.
+The pre-trained models are already provided in **[Releases](https://github.com/drishti-m/Paraview_PyTorch_Plugin/releases/tag/v1.0)**. The models for image classification and segmentation were downloaded from PyTorch, rest were trained by author. But, if you wish to
+re-train the model for fluid classification and segmentation, follow the instructions below.
 
 * Go to directory `model-training/`.
 * Run `python train_fluid_classifier.py` for fluid classifier, and
@@ -89,10 +91,10 @@ The *"Surface view"* results of applying Fluid Segmentation Plugin for velocity 
 │   ├── img_segment_plugin.py              # plugin code for image segmentation
 ├── plugin-test                            # source code for test plugins (ground truth)
 ├── pre-trained-models                     # all pre-trained models 
-│   ├── fluid-classify                     # pre-trained models for fluid classification
-│   ├── fluid-segment                      # pre-trained models for fluid segmentation
-│   ├── img-classify                       # pre-trained models for img classification
-│   └── img-segment                        # pre-trained models for img segmentation
+│   ├── fluid-classify                     # pre-trained model architecture for fluid classification
+│   ├── fluid-segment                      # pre-trained models architecture for fluid segmentation
+│   ├── img-classify                       # pre-trained models architecture for img classification
+│   └── img-segment                        # pre-trained models architecture for img segmentation
 ├── README.md                              # readme
 └── requirements.txt                       # package requirements
 └── Rough ideas                            # Initial idea/experiment with Programmable Filter
