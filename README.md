@@ -95,6 +95,8 @@ The *"Surface view"* results of applying Fluid Segmentation Plugin for velocity 
 │   └── img-segment                        # pre-trained models for img segmentation
 ├── README.md                              # readme
 └── requirements.txt                       # package requirements
+└── Rough ideas                            # Initial idea/experiment with Programmable Filter
+
 ```
 
 ## Contributing
