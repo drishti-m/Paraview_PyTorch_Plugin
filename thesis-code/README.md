@@ -38,7 +38,7 @@ installed via pip.
 4. Load all plugins required, eg, `plugin-src/fluid_classifier_plugin.py`
 5. Open you source input file in Paraview by `File -> Open`.
 6. After loading your input source, Go to `Filters -> Search`.
-7. Type the name of the filer (named below)
+7. Type the name of the filter (named below), and give the user parameters and 'Apply' the filter.
 
 The main plugins in this repository are named as follows:
 * ML_Fluid_Classifier
@@ -49,6 +49,16 @@ The main plugins in this repository are named as follows:
 The test plugins in this repository are named as follows:
 * Threshold_Fluid_Classify
 * Threshold_Fluid_Segment
+
+**Example: User parameters for ML_Fluid_Segmentation**:
+
+1. *Trained Model's Path*: 
+`./thesis-code/pre-trained-models/fluid-segment/fluid-segment(velocity).pth`
+2. *Model's Class Defn Path*: `./thesis-code/pre-trained-models/fluid-segment/NN_fluid_segment.py`
+
+
+*Note: The path above should be relative to the location of executable of Paraview.*
+
 The test plugins are to see the ground truth results of computed fluid classification and segmentation, and are used to compare with the ML based classification & segmentation.
 
 ## Instructions to train the models

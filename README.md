@@ -40,7 +40,7 @@ installed via pip.
 4. Load all plugins required, eg, `plugin-src/fluid_classifier_plugin.py`
 5. Open you source input file in Paraview by `File -> Open`.
 6. After loading your input source, Go to `Filters -> Search`.
-7. Type the name of the filer (named below)
+7. Type the name of the filter (named below)
 
 The main plugins in this repository are named as follows:
 * ML_Fluid_Classifier
