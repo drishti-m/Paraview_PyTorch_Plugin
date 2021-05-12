@@ -3,5 +3,6 @@
 plgin-src/__pycache__/
 plugin-test/__pycache__/
 pre-trained-models/__pycache__/
-pre-trained-models/*.pth
+*.pth
 model-training/runs/
+model-training/datasets/

@@ -1,28 +1,35 @@
+"""
+File for class defintion (neural net architecture)
+of fluid segmentation trained on velocity data.
+"""
+
 import torch
-import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        batch_size = 2500
+
         # First fully connected layer
-        self.fc1 = nn.Linear(batch_size, 50)
+        self.fc1 = nn.Linear(3, 80)
         # Second fully connected layer
-        self.fc2 = nn.Linear(50, 20)
-        # Third fully connected layer
-        self.fc3 = nn.Linear(20, 2)
+        self.fc2 = nn.Linear(80, 40)
+        # third fully connected layer
+        self.fc3 = nn.Linear(40, 10)
+        # fourth fully connected layer
+        self.fc4 = nn.Linear(10, 2)
 
     # x represents our data
     def forward(self, x):
         compo = x
         compo = self.fc1(compo)
         compo = self.fc2(compo)
-        compo = torch.tanh(compo)
         compo = self.fc3(compo)
+        compo = torch.tanh(compo)
+        compo = self.fc4(compo)
+
         return compo
 
     def predict(self, x):
