@@ -5,7 +5,7 @@
     * [Done By](#done-by)
 * [Instructions for installation](#instructions-for-installation)
 * [Instructions to use filter plugin in Paraview](#instructions-to-use-filter-plugin-in-paraview)
-* [Instructions to train the models](#instructions-to-train-the-models)
+* [Instructions to download & train the models](#instructions-to-download-&-train-the-models)
 * [Example Results](#example-results)
 * [Directory Structure](#directory-structure)
 
@@ -46,7 +46,7 @@ The main plugins in this repository are named as follows:
 * ML_Img_Classifier
 * ML_Img_Segmentation
 
-The test plugins in this repository are named as follows:
+The test plugins are to see the ground truth results of computed fluid classification and segmentation, and are used to compare with the ML based classification & segmentation. The test plugins in this repository are named as follows:
 * Threshold_Fluid_Classify
 * Threshold_Fluid_Segment
 
@@ -56,21 +56,32 @@ The test plugins in this repository are named as follows:
 `./thesis-code/pre-trained-models/fluid-segment/fluid-segment(velocity).pth`
 2. *Model's Class Defn Path*: `./thesis-code/pre-trained-models/fluid-segment/NN_fluid_segment.py`
 
+**Example: User parameters for ML_Image_Classification**:
+1. *Trained Model's Path*: 
+`./thesis-code/pre-trained-models/img-classify/alexnet.pth`
+2. *Model's Labels Path*: `./thesis-code/pre-trained-models/img-classify/imagenet_classes.txt`
+ 
+*Note: The path above should be relative to the location of executable of Paraview, or absolute path from home.*
 
-*Note: The path above should be relative to the location of executable of Paraview.*
 
-The test plugins are to see the ground truth results of computed fluid classification and segmentation, and are used to compare with the ML based classification & segmentation.
+## Instructions to download & train the models
+The pre-trained models for fluid classification & segmentation are already provided in the directory `pre-trained-models`. The pre-trained models for image classification & segmentation need to be downloaded from PyTorch. Run the script below.
+```
+cd pre-trained-models
+python download_models.py
+```
+The downloaded models will be saved at `pre-trained-models`.
 
-## Instructions to train the models
-The pre-trained models are already provided in the directory `pre-trained-models`. But, if you wish to
-train the model for fluid classification and segmentation, follow the instructions below.
+If you wish to train the model for fluid classification and segmentation, follow the instructions below.
 
-* Go to directory `model-training/`.
-* Run `python train_fluid_classifier.py` for fluid classifier, and
-`python train_fluid_segment.py` for fluid segmentation, and the models
-will be saved at `model-training/models`.
-* To check the graph of training & validation loss, run
-`tensorboard --logdir model-training/runs/` from the outer directory.
+```
+cd model-training
+python train_fluid_classifier.py
+python train_fluid_segment.py
+tensorboard --logdir runs/
+```
+Your training models will be saved at `model-training/models`.
+
 
 
 ## Example Results
