@@ -6,17 +6,11 @@ It takes from user one parameters: Trained Model's Path.
 The path can be either absolute or relative to Paraview's binary executable location.
 This plugin is designed to segment an image based on training model. The segmented labels can be colored as either greyscale or RBG values.
 """
-from vtk.util import numpy_support
 from paraview.vtk.util import numpy_support as ns
-from paraview import simple
 from paraview.util.vtkAlgorithm import *
 from vtkmodules.numpy_interface import dataset_adapter as DA
 import torch
-import torchvision
 import torchvision.transforms as T
-import torch.nn as nn
-import torch.nn.functional as F
-import os
 import numpy as np
 
 
@@ -32,7 +26,7 @@ class ML_Img_Segmentation(VTKPythonAlgorithmBase):
     def __init__(self):
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkImageData")
-    
+
     # First step in pipeline: set Port info
     def FillInputPortInformation(self, port, info):
         if port == 0:
@@ -193,7 +187,7 @@ class ML_Img_Segmentation(VTKPythonAlgorithmBase):
             segmented_img = np.stack([r, g, b], axis=2)
         return segmented_img
 
-    @smproperty.stringvector(name="Trained Model Path")
+    @smproperty.stringvector(name="Trained Model's Path")
     def SetModelPathR(self, x):
         print("Model path: ", x)
         self.model_path = x

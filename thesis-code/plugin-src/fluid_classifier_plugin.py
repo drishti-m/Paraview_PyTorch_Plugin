@@ -10,14 +10,12 @@ Threshold value is determined during training of model.
 
 """
 
+from numpy.core.fromnumeric import resize
 from paraview.util.vtkAlgorithm import *
 from paraview.vtk.util import numpy_support as ns
 from paraview import simple
 import vtk
-from vtkmodules.numpy_interface import dataset_adapter as DA
 import torch
-import torch.nn as nn
-import os
 import numpy as np
 
 
@@ -60,28 +58,6 @@ class ML_Fluid_Classifier(VTKPythonAlgorithmBase):
         dsa.AddArray(strArray)
         return 1
 
-    def Create_vtkTable_Columns(self, predictions_np, predicted_classes):
-        """
-        Helper function to create rows and columns for table
-
-        Args:
-        predictions_np: numpy array of predicted confidence values
-        predicted_classes: string array of corresponding classes
-
-        Returns:
-        predictions_vtk: VTK array for predicted confidence values 
-        strArray: VTK array of corresponding classes
-        """
-        predictions_vtk = ns.numpy_to_vtk(predictions_np)
-        predictions_vtk.SetName("Confidence %")
-        strArray = vtk.vtkStringArray()
-
-        strArray.SetName("Predicted Labels")
-        strArray.SetNumberOfTuples(len(predicted_classes))
-        for i in range(0, len(predicted_classes), 1):
-            strArray.SetValue(i, predicted_classes[i])
-        return predictions_vtk, strArray
-
     def Process_RectlinearGrid(self, inInfoVec, outInfoVec):
         """
         Helper function to process info from input to send it for model inference
@@ -110,6 +86,10 @@ class ML_Fluid_Classifier(VTKPythonAlgorithmBase):
         no_components = input_vtk_array.GetNumberOfComponents()
         input_numpy_array = ns.vtk_to_numpy(input_vtk_array)
 
+        # if input array is vector data, feed its magnitude array to the trained model
+        if no_components > 1:
+            input_numpy_array = np.array(
+                [np.sqrt(x.dot(x)) for x in input_numpy_array])
         predictions_np, predicted_classes = self.Classify(
             input_numpy_array)
         predictions_vtk, strArray = self.Create_vtkTable_Columns(
@@ -138,10 +118,14 @@ class ML_Fluid_Classifier(VTKPythonAlgorithmBase):
         else:
             net = torch.load(self.model_path)
 
-        print(numpy_array.shape)
+        # pre-processing array to be in right shape for model inference
+        if len(numpy_array) != 2500:
+            print("Pre-processing array")
+            numpy_array = np.resize(numpy_array, (2500,))
+        print("Shape of processed Numpy array (input):", numpy_array.shape)
         torch_array = torch.from_numpy(numpy_array.copy()).to(torch.float)
         torch_array = torch.stack([torch_array, torch_array], dim=0)
-        print(torch_array.shape)
+        print("Shape of converted torch array (input): ", torch_array.shape)
 
         return self.Make_Predictions(net, torch_array)
 
@@ -186,6 +170,28 @@ class ML_Fluid_Classifier(VTKPythonAlgorithmBase):
         sys.path.append(class_dir)
         module_name = Path(self.class_path).stem
         return module_name
+
+    def Create_vtkTable_Columns(self, predictions_np, predicted_classes):
+        """
+        Helper function to create rows and columns for table
+
+        Args:
+        predictions_np: numpy array of predicted confidence values
+        predicted_classes: string array of corresponding classes
+
+        Returns:
+        predictions_vtk: VTK array for predicted confidence values 
+        strArray: VTK array of corresponding classes
+        """
+        predictions_vtk = ns.numpy_to_vtk(predictions_np)
+        predictions_vtk.SetName("Confidence %")
+        strArray = vtk.vtkStringArray()
+
+        strArray.SetName("Predicted Labels")
+        strArray.SetNumberOfTuples(len(predicted_classes))
+        for i in range(0, len(predicted_classes), 1):
+            strArray.SetValue(i, predicted_classes[i])
+        return predictions_vtk, strArray
 
     @ smproperty.stringvector(name="Trained Model's Path")
     def SetModelPathR(self, x):

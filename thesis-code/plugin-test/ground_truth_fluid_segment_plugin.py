@@ -1,5 +1,5 @@
 """
-This is the plugin code for threshold segmentation(binary) of rectilinear grid. 
+This is the plugin code for threshold segmentation(binary) of rectilinear grid.
 This plugin is designed to segment a grid such that cells with magnitude greater than the threshold value are
 labelled as 1, otherwise labelled as 0. This provides the ground truth results for
 such a fluid segmentation.
@@ -11,9 +11,6 @@ It takes from user two parameters: Threshold value.
 
 from paraview.util.vtkAlgorithm import *
 from paraview.vtk.util import numpy_support as ns
-from paraview import simple
-import vtk
-from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as DA
 import numpy as np
 
@@ -28,7 +25,7 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
     t_index = 0
 
     def __init__(self):
-        self.threshold_cut = 0.5
+        self.threshold_cut = 0.01
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkRectilinearGrid")
 
@@ -43,8 +40,7 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
 
     # Request Data from input and create output
     def RequestData(self, request, inInfoVec, outInfoVec):
-        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
-        from vtkmodules.vtkCommonCore import VTK_DOUBLE
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 
         '''inInfoVec = tuple
         inInfoVec[0] = vtkInformationVector
@@ -64,30 +60,27 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
 
         return 1
 
-
-    def Process_RectlinearGrid(self, inInfoVec, outInfoVec):     
-       """
-        Helper function to process info from input and carry out threshold segmentation.
-        Args:
-        inInfoVec: input information vector
-        outInfoVec: output information vector
-        Returns:
-        x, y, z: output x,y,z dimensions respectively
-        xCoords, yCoords, zCoords: output's x co-ordinates, y-coordinates, z-coordinates respectively
-        output_vtk_array: VTK array for output
+    def Process_RectlinearGrid(self, inInfoVec, outInfoVec):
         """
-        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid, vtkImageData
-        from vtkmodules.vtkCommonCore import VTK_DOUBLE
+         Helper function to process info from input and carry out threshold segmentation.
+         Args:
+         inInfoVec: input information vector
+         outInfoVec: output information vector
+         Returns:
+         x, y, z: output x,y,z dimensions respectively
+         xCoords, yCoords, zCoords: output's x co-ordinates, y-coordinates, z-coordinates respectively
+         output_vtk_array: VTK array for output
+         """
+        from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
+
         pdi = vtkRectilinearGrid.GetData(inInfoVec[0], 0)
 
         x, y, z = pdi.GetDimensions()
         xCoords = pdi.GetXCoordinates()
         yCoords = pdi.GetYCoordinates()
         zCoords = pdi.GetZCoordinates()
-        no_arrays = pdi.GetPointData().GetNumberOfArrays()
         float_array = pdi.GetPointData().GetAbstractArray(0)
         numpy_array = ns.vtk_to_numpy(float_array)
-        # print(numpy_array.shape)
 
         if float_array.GetNumberOfComponents() > 1:
             mag = np.array([np.sqrt(x.dot(x)) for x in numpy_array])
@@ -97,8 +90,6 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
         seg_array = tf_array.astype(int)
         output_vtk_array = DA.numpyTovtkDataArray(
             seg_array, name="numpy_array")
-
-        output = vtkRectilinearGrid.GetData(outInfoVec, 0)
 
         return x, y, z, xCoords, yCoords, zCoords, output_vtk_array
 
@@ -114,5 +105,3 @@ class ThresholdRectilinear(VTKPythonAlgorithmBase):
         print("Threshold set", x)
         self.threshold_cut = x
         self.Modified()
-
-

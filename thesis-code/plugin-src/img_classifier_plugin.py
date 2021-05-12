@@ -9,11 +9,8 @@ The output displays classification labels with top 10 highest confidence scores.
 """
 
 import torch
-import torchvision
 import torchvision.transforms as transforms
-import os
 from paraview.vtk.util import numpy_support as ns
-from paraview import simple
 from paraview.util.vtkAlgorithm import *
 import vtk
 import numpy as np
@@ -236,7 +233,6 @@ class ML_Img_Classifier(VTKPythonAlgorithmBase):
             pixels_np_array = np.repeat(pixels_np_array, 3)
         # x, y reversed between vtk <-> numpy array
         pixels_np_array = pixels_np_array.reshape((y, x, 3))
-        #pixels_np_array = np.flip(pixels_np_array, axis=2)
         pixels_np_array = np.flip(pixels_np_array, axis=0)
         pixels_np_array = pixels_np_array.astype(np.uint8)
 
@@ -263,13 +259,13 @@ class ML_Img_Classifier(VTKPythonAlgorithmBase):
         # x, y reversed between vtk <-> numpy array
         return vtk_output, r_y, r_x, r_z
 
-    @smproperty.stringvector(name="Trained Model Path")
+    @smproperty.stringvector(name="Trained Model's Path")
     def SetModelPathR(self, x):
         print("Model path: ", x)
         self.model_path = x
         self.Modified()
 
-    @smproperty.stringvector(name="Class Labels Path")
+    @smproperty.stringvector(name="Model's Labels Path")
     def SetLabelsPathR(self, x):
         print("Labels path: ", x)
         self.labels_path = x

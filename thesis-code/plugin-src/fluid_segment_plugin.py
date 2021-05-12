@@ -1,4 +1,4 @@
-  
+
 """
 This is the plugin code for fluid segmentation.
 Accepted input data models: VTK Rectilinear Grid
@@ -12,15 +12,8 @@ Threshold value is determined during training of model.
 
 from paraview.util.vtkAlgorithm import *
 from paraview.vtk.util import numpy_support as ns
-from paraview import simple
-import vtk
-from vtk.util import numpy_support
 from vtkmodules.numpy_interface import dataset_adapter as DA
 import torch
-import torchvision
-import torch.nn as nn
-import torch.nn.functional as F
-import os
 import numpy as np
 
 
@@ -37,7 +30,7 @@ class ML_Fluid_Segmentation(VTKPythonAlgorithmBase):
     def __init__(self):
         VTKPythonAlgorithmBase.__init__(
             self, nInputPorts=1, nOutputPorts=1, outputType="vtkRectilinearGrid")
-        
+
     # First step in pipeline: set Port info
     def FillInputPortInformation(self, port, info):
         if port == 0:
@@ -115,12 +108,19 @@ class ML_Fluid_Segmentation(VTKPythonAlgorithmBase):
 
         net = module.Net()
         net.load_state_dict(torch.load(self.model_path))
-        print(numpy_array.shape)
+        print("Shape of input numpy array: ", numpy_array.shape)
+
+        # Pre-process input numpy array to be in right shape for model inference
+        if no_components == 1:
+            numpy_array = np.stack((numpy_array,)*3, axis=-1)
+            print(
+                "Model is designed for 3-component data, so array restacked to shape: ", numpy_array.shape)
+        if numpy_array.shape != (2500, 3):
+            numpy_array = np.resize(numpy_array, (2500, 3))
+            print("Numpy array(input resized to: ", numpy_array.shape)
 
         torch_array = torch.from_numpy(numpy_array.copy()).to(torch.float)
-        if no_components < 2:
-            torch_array = torch.unsqueeze(torch_array, 1)
-        print(torch_array.shape)
+        print("Converted input torch array shape: ", torch_array.shape)
 
         outputs = net.predict(torch_array)
         segmented_np_array = outputs.detach().numpy()
