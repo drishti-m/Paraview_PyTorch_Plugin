@@ -18,7 +18,7 @@ import numpy as np
 @smproxy.filter()
 @smproperty.input(name="InputRectilinear", port_index=0)
 @smdomain.datatype(dataTypes=["vtkRectilinearGrid"], composite_data_supported=True)
-class ThresholdRectilinear(VTKPythonAlgorithmBase):
+class Threshold_Fluid_Segment(VTKPythonAlgorithmBase):
     threshold_cut = 0.01
     input_data_type = ""
     t_port = 0

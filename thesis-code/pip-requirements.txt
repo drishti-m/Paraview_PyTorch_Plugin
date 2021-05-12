@@ -1,0 +1,9 @@
+appdirs
+scooby
+vtk
+scipy
+pyrsistent
+torchvision
+torch
+meshio
+imageio

@@ -1,4 +1,3 @@
-
 *.pyc
 plgin-src/__pycache__/
 plugin-test/__pycache__/
