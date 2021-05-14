@@ -6,12 +6,14 @@ Training inspired by tutorial:
 https://medium.com/@prudhvirajnitjsr/simple-classifier-using-pytorch-37fba175c25c
 """
 
+from os.path import dirname
 from torch.utils.tensorboard import SummaryWriter
 import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import os
 
 threshold = 0.0
 
@@ -126,8 +128,11 @@ class Net(nn.Module):
 def main():
     # load datasets
     all_arrays = []
+    dir_name = os.path.dirname(os.path.realpath(__file__))
+    # print(dir_name)
     for i in range(0, 10, 1):
-        path = './datasets/pressure/pressure_data_' + str(i) + ".csv"
+        print("..", dir_name)
+        path = dir_name + '/datasets/pressure/pressure_data_' + str(i) + ".csv"
         print(path)
         current_array = read_arrays(path)
         all_arrays.append(np.array(current_array).flatten())
@@ -203,7 +208,7 @@ def main():
 
     # save trained model
     print('Finished Training')
-    PATH = './models/fluid-classifier(pressure).pth'
+    PATH = dir_name + '/models/fluid-classifier(pressure).pth'
     torch.save(net.state_dict(), PATH)
     print("Model saved at ", PATH)
 

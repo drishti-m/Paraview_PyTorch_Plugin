@@ -5,12 +5,14 @@ Here, threshold value = 0.01
 Training inspired by tutorial:
 https://medium.com/@prudhvirajnitjsr/simple-classifier-using-pytorch-37fba175c25c
 """
+from os.path import dirname
 from torch.utils.tensorboard import SummaryWriter
 import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import os
 
 
 class Dataset:
@@ -131,8 +133,10 @@ class Net(nn.Module):
 def main():
     # load datasets
     all_arrays = []
+    dir_name = os.path.dirname(os.path.realpath(__file__))
     for i in range(0, 13, 1):
-        path = './datasets/velocity/velocity_data_' + str(i) + ".csv"
+        path = dir_name + '/datasets/velocity/velocity_data_' + \
+            str(i) + ".csv"
         print(path)
         current_array = read_arrays(path)
         all_arrays.append(current_array)
@@ -199,7 +203,7 @@ def main():
 
     # save training model
     print('Finished Training')
-    PATH = './models/fluid-segment(velocity).pth'
+    PATH = dir_name + '/models/fluid-segment(velocity).pth'
     torch.save(net.state_dict(), PATH)
     print("Model saved at ", PATH)
 

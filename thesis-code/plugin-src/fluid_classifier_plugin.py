@@ -163,7 +163,6 @@ class ML_Fluid_Classifier(VTKPythonAlgorithmBase):
         import sys
         import os.path
         from pathlib import Path
-        from importlib import import_module
 
         abs_path_class = os.path.abspath(self.class_path)
         class_dir = os.path.dirname(abs_path_class)
