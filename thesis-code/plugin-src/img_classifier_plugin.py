@@ -6,6 +6,9 @@ It takes from user two parameters: Trained Model's Path, Class Labels Path.
 The path can be either absolute or relative to Paraview's binary executable location.
 This plugin is designed to classify an image / grid into one of the pre-defined classes or labels.
 The output displays classification labels with top 10 highest confidence scores.
+
+The model inference process was inspired from the tutorial:
+https://learnopencv.com/pytorch-for-beginners-image-classification-using-pre-trained-models/
 """
 
 import torch
@@ -228,7 +231,7 @@ class ML_Img_Classifier(VTKPythonAlgorithmBase):
 
         """
         pixels_np_array = ns.vtk_to_numpy(pixels_vtk_array)
-        # print(pixels_np_array)
+        # convert grayscale to RBG
         if pixels_vtk_array.GetNumberOfComponents() < 3:
             pixels_np_array = np.repeat(pixels_np_array, 3)
         # x, y reversed between vtk <-> numpy array

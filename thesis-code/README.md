@@ -18,11 +18,13 @@ To couple the interface of **[Paraview](https://www.paraview.org/)**, *a visuali
 
 ## Instructions for installation
 
-The plugins have been developed with *Paraview `5.8.1`* built against *Python `3.8.5`*. 
+*[Note to supervisor]: The installation of Paraview with Python support have been already set up in Titlis. The executable of Paraview is in* `/home/dmaharjan/paraview/paraview_build/bin`. Below are the instructions if you wish to build from scratch.
+
+The plugins have been developed with *Paraview `5.8.1`* built against *Python `3.7.4`*. It should generally work for Python versions 3.3+. 
 Follow instructions to build Paraview [here](https://gitlab.kitware.com/paraview/paraview/blob/master/Documentation/dev/build.md). Make sure to turn on `PARAVIEW_USE_PYTHON` option while building it to enable
 Python support.
 
-For installation of other packages and libraries:3.7.4
+For installation of other packages and libraries:
 ```
 conda create --name <env> python=3.7.4 --file requirements.txt
 conda activate <env>
@@ -30,6 +32,7 @@ pip install -r pip-requirements.txt
 ```
 Some packages are not available in conda so those packages are listed in pip-requirements and are to be 
 installed via pip.
+
 
 ## Instructions to use filter plugin in Paraview
 1. In the conda environment you built, open Paraview

@@ -5,6 +5,9 @@ Output data model: VTK Image Data
 It takes from user one parameters: Trained Model's Path.
 The path can be either absolute or relative to Paraview's binary executable location.
 This plugin is designed to segment an image based on training model. The segmented labels can be colored as either greyscale or RBG values.
+
+The model inference process was inspired from the tutorial:
+https://learnopencv.com/pytorch-for-beginners-semantic-segmentation-using-torchvision/
 """
 from paraview.vtk.util import numpy_support as ns
 from paraview.util.vtkAlgorithm import *
@@ -69,6 +72,10 @@ class ML_Img_Segmentation(VTKPythonAlgorithmBase):
 
         """
         pixels_np_array = ns.vtk_to_numpy(pixels_vtk_array)
+
+        # convert grayscale to RBG
+        if pixels_vtk_array.GetNumberOfComponents() < 3:
+            pixels_np_array = np.repeat(pixels_np_array, 3)
 
         # x, y reversed between vtk <-> numpy array
         pixels_np_array = pixels_np_array.reshape((y, x, 3))
